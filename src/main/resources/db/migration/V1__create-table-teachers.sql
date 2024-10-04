@@ -1,0 +1,7 @@
+CREATE TABLE teachers(
+    id UUID NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(200) NOT NULL,
+    PRIMARY KEY (id)
+)
