@@ -33,7 +33,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.POST, "/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/refresh-token").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated()  
                 )
                 .cors( cors -> cors.configurationSource(corsConfigurationSource()))
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);

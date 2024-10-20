@@ -19,6 +19,7 @@ import java.util.UUID;
 @Entity(name = "Teacher")
 @Table(name = "teachers")
 public class Teacher implements UserDetails {
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -43,4 +44,5 @@ public class Teacher implements UserDetails {
     public String getUsername() {
       return this.email;
     }
+
 }

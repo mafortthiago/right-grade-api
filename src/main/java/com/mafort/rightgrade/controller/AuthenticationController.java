@@ -35,6 +35,11 @@ public class AuthenticationController {
         var authenticationToken = new UsernamePasswordAuthenticationToken(login.email(), login.password());
         var authentication = authenticationManager.authenticate(authenticationToken);
         var tokenJWT = tokenService.generateToken((Teacher) authentication.getPrincipal());
+        var teacher = (Teacher) teacherRepository.findByEmail(login.email());
+        var actualToken = refreshTokenRepository.findByTeacherId(teacher.getId());
+        if(actualToken != null){
+            refreshTokenRepository.deleteById(actualToken.getId());
+        }
         var refreshToken = tokenService.generateRefreshToken((Teacher) authentication.getPrincipal());
         refreshTokenRepository.save(new RefreshToken(refreshToken, (Teacher) authentication.getPrincipal()));
         return ResponseEntity.ok(new JWTDTO(tokenJWT, refreshToken));
@@ -55,10 +60,14 @@ public class AuthenticationController {
     public ResponseEntity<JWTDTO> refreshToken(@RequestBody RefreshTokenRequestDTO refreshToken) {
         try {
             String email = tokenService.getSubject(refreshToken.jwt());
-            var teacher = teacherRepository.findByEmail(email);
-            var newToken = tokenService.generateToken((Teacher) teacher);
-            var newRefreshToken = tokenService.generateRefreshToken((Teacher) teacher);
-            refreshTokenRepository.save(new RefreshToken(newRefreshToken, (Teacher) teacher));
+            var teacher = (Teacher)teacherRepository.findByEmail(email);
+            var actualToken = refreshTokenRepository.findByTeacherId(teacher.getId());
+            if(actualToken != null){
+                refreshTokenRepository.deleteById(actualToken.getId());
+            }
+            var newToken = tokenService.generateToken(teacher);
+            var newRefreshToken = tokenService.generateRefreshToken( teacher);
+            refreshTokenRepository.save(new RefreshToken(newRefreshToken, teacher));
             return ResponseEntity.ok(new JWTDTO(newToken, newRefreshToken));
         } catch (JWTVerificationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
