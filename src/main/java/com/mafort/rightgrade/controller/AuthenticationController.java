@@ -14,8 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.Console;
 
 @RestController
 public class AuthenticationController {
@@ -62,9 +65,13 @@ public class AuthenticationController {
             String email = tokenService.getSubject(refreshToken.jwt());
             var teacher = (Teacher)teacherRepository.findByEmail(email);
             var actualToken = refreshTokenRepository.findByTeacherId(teacher.getId());
-            if(actualToken != null){
-                refreshTokenRepository.deleteById(actualToken.getId());
+            if (actualToken == null) {
+                throw new JWTVerificationException("Refresh token not found");
             }
+            if (!refreshToken.jwt().equals(actualToken.getToken())) {
+                throw new JWTVerificationException("Invalid jwt");
+            }
+            refreshTokenRepository.deleteById(actualToken.getId());
             var newToken = tokenService.generateToken(teacher);
             var newRefreshToken = tokenService.generateRefreshToken( teacher);
             refreshTokenRepository.save(new RefreshToken(newRefreshToken, teacher));

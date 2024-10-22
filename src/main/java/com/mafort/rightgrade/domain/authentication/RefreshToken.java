@@ -14,6 +14,7 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Getter
     private UUID id;
+    @Getter
     private String token;
     @OneToOne
     @JoinColumn(name = "teacher_id", referencedColumnName = "id")
