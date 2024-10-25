@@ -3,6 +3,7 @@ package com.mafort.rightgrade.infra.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,7 +16,7 @@ public class ErrorHandler {
      *
      * @return ResponseEntity containing the error message and HTTP status code 403 (FORBIDDEN).
      */
-    @ExceptionHandler(BadCredentialsException.class)
+    @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<String> handle403error() {
         String message = "Invalid email or password";
         return ResponseEntity.status(401).body(message);
