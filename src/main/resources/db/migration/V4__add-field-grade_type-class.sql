@@ -1,0 +1,1 @@
+ALTER TABLE class ADD COLUMN grade_type BIT(1)
