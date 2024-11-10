@@ -1,0 +1,7 @@
+ALTER TABLE class
+ALTER COLUMN grade_type TYPE BOOLEAN
+USING CASE
+    WHEN grade_type = B'1' THEN TRUE
+    WHEN grade_type = B'0' THEN FALSE
+    ELSE NULL
+END;
