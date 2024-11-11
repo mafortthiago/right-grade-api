@@ -1,0 +1,1 @@
+ALTER TABLE class ALTER COLUMN minimum_grade TYPE NUMERIC(4,2);

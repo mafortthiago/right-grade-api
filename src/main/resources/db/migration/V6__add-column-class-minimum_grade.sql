@@ -1,0 +1,1 @@
+ALTER TABLE class ADD COLUMN minimum_grade NUMERIC(3,2);
