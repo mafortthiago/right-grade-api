@@ -1,4 +1,6 @@
 package com.mafort.rightgrade.infra.security;
 
-public record JWTDTO(String accessToken, String refreshToken ) {
+import java.util.UUID;
+
+public record JWTDTO(String accessToken, String refreshToken, UUID id) {
 }

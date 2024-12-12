@@ -45,7 +45,7 @@ public class AuthenticationController {
         }
         var refreshToken = tokenService.generateRefreshToken((Teacher) authentication.getPrincipal());
         refreshTokenRepository.save(new RefreshToken(refreshToken, (Teacher) authentication.getPrincipal()));
-        return ResponseEntity.ok(new JWTDTO(tokenJWT, refreshToken));
+        return ResponseEntity.ok(new JWTDTO(tokenJWT, refreshToken, teacher.getId()));
     }
 
     @PostMapping("/register")
@@ -56,7 +56,7 @@ public class AuthenticationController {
         var tokenJWT = tokenService.generateToken(teacher);
         var refreshToken = tokenService.generateRefreshToken(teacher);
         refreshTokenRepository.save(new RefreshToken(refreshToken,teacher));
-        return ResponseEntity.status(HttpStatus.CREATED).body(new JWTDTO(tokenJWT, refreshToken));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new JWTDTO(tokenJWT, refreshToken, teacher.getId()));
     }
 
     @PostMapping("/refresh-token")
@@ -75,7 +75,7 @@ public class AuthenticationController {
             var newToken = tokenService.generateToken(teacher);
             var newRefreshToken = tokenService.generateRefreshToken( teacher);
             refreshTokenRepository.save(new RefreshToken(newRefreshToken, teacher));
-            return ResponseEntity.ok(new JWTDTO(newToken, newRefreshToken));
+            return ResponseEntity.ok(new JWTDTO(newToken, newRefreshToken, teacher.getId()));
         } catch (JWTVerificationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
