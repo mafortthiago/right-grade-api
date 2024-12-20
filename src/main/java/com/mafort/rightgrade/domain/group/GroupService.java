@@ -5,7 +5,9 @@ import com.mafort.rightgrade.domain.teacher.Teacher;
 import com.mafort.rightgrade.domain.teacher.TeacherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -27,9 +29,12 @@ public class GroupService {
 
         return new Group(createGroupDTO, teacher);
     }
-    public CustomPage<GroupListResponseDTO> findAllById(UUID id, Pageable pageable){
-        Page<Group> pages = groupRepository.findByTeacherId(id, pageable);
+
+    public CustomPage<GroupListResponseDTO> findAllById(UUID id, Pageable pageable, String sortBy, String direction) {
+        Sort sort = direction.equalsIgnoreCase(Sort.Direction.DESC.name()) ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        Page<Group> pages = groupRepository.findByTeacherId(id, sortedPageable);
         CustomPage<Group> customPages = new CustomPage<>(pages);
-        return customPages.map(p ->new GroupListResponseDTO(p.getId(), p.getName(), p.getMinimumGrade(), p.isGradeFrom0To100()));
+        return customPages.map(p -> new GroupListResponseDTO(p.getId(), p.getName(), p.getMinimumGrade(), p.isGradeFrom0To100()));
     }
 }
