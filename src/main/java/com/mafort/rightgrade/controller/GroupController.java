@@ -30,12 +30,17 @@ public class GroupController{
         return ResponseEntity.created(uri).body(new GroupResponseDTO(group));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/byTeacher/{id}")
     public ResponseEntity<CustomPage<GroupListResponseDTO>> findAllById
             (@PathVariable UUID id,
              Pageable pageable,
              @RequestParam(defaultValue = "createdAt") String sortBy,
              @RequestParam(defaultValue = "desc") String direction){
         return ResponseEntity.ok(this.service.findAllById(id, pageable, sortBy, direction));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<GroupResponseDTO> findById(@PathVariable UUID id){
+        return ResponseEntity.ok(this.service.findById(id));
     }
 }
