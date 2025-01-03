@@ -1,9 +1,7 @@
 package com.mafort.rightgrade.domain.gradingPeriod;
 
 import com.mafort.rightgrade.domain.group.Group;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +14,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter
 public class GradingPeriod {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private String name;
     @ManyToOne
