@@ -6,6 +6,7 @@ import com.mafort.rightgrade.infra.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -23,5 +24,9 @@ public class GradingPeriodService {
         GradingPeriod gradingPeriod = new GradingPeriod(createGradingPeriod, group.get());
         this.gradingPeriodRepository.save(gradingPeriod);
         return gradingPeriod;
+    }
+
+    public List<GradingPeriod> getAll(){
+        return this.gradingPeriodRepository.findAll();
     }
 }

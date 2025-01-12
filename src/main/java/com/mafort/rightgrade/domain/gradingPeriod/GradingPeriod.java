@@ -1,5 +1,6 @@
 package com.mafort.rightgrade.domain.gradingPeriod;
 
+import com.mafort.rightgrade.domain.assessment.Assessment;
 import com.mafort.rightgrade.domain.group.Group;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -19,9 +21,11 @@ public class GradingPeriod {
     private UUID id;
     private String name;
     @ManyToOne
-    @JoinColumn(name = "class_id", referencedColumnName = "id")
+    @JoinColumn(name = "class_id")
     private Group group;
     private LocalDateTime createdAt;
+    @OneToMany(mappedBy = "gradingPeriod", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Assessment> assessments;
 
     public GradingPeriod(CreateGradingPeriod gradingPeriod, Group group){
         this.name = gradingPeriod.name();
