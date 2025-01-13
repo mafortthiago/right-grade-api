@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class GradingPeriodService {
@@ -28,5 +29,16 @@ public class GradingPeriodService {
 
     public List<GradingPeriod> getAll(){
         return this.gradingPeriodRepository.findAll();
+    }
+
+    public void edit(EditGradingPeriod editGradingPeriod, UUID gradingPeriodId){
+        Optional<GradingPeriod> optionalGradingPeriod = gradingPeriodRepository.findById(gradingPeriodId);
+        if(optionalGradingPeriod.isEmpty()){
+            throw new NotFoundException("Grading period not found for the provided ID.");
+        }
+        GradingPeriod existingGradingPeriod = optionalGradingPeriod.get();
+
+        existingGradingPeriod.setName(editGradingPeriod.name());
+        gradingPeriodRepository.save(existingGradingPeriod);
     }
 }

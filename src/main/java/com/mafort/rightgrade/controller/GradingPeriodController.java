@@ -1,0 +1,33 @@
+package com.mafort.rightgrade.controller;
+
+import com.mafort.rightgrade.domain.gradingPeriod.*;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.util.List;
+import java.util.UUID;
+
+@RequestMapping("gradingPeriod")
+@RestController
+public class GradingPeriodController {
+    @Autowired
+    private GradingPeriodService gradingPeriodService;
+
+    @PostMapping
+    public ResponseEntity<GradingPeriodResponse> create(@Valid @RequestBody  CreateGradingPeriod createGradingPeriod, UriComponentsBuilder uriComponentsBuilder){
+        GradingPeriod gradingPeriod = this.gradingPeriodService.create(createGradingPeriod);
+        URI uri = uriComponentsBuilder.path("gradingPeriod/{id}").buildAndExpand(gradingPeriod.getId()).toUri();
+        return ResponseEntity.created(uri).body(new GradingPeriodResponse(gradingPeriod));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> edit(@Valid @RequestBody EditGradingPeriod editGradingPeriod, @PathVariable UUID gradingPeriodId){
+        this.gradingPeriodService.edit(editGradingPeriod, gradingPeriodId);
+        return ResponseEntity.ok().build();
+    }
+
+}

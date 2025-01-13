@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +20,7 @@ public class GradingPeriod {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+    @Setter
     private String name;
     @ManyToOne
     @JoinColumn(name = "class_id")
