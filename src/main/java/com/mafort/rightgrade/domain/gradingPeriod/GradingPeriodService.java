@@ -28,7 +28,7 @@ public class GradingPeriodService {
     }
 
     public List<GradingPeriod> getAll(){
-        return this.gradingPeriodRepository.findAll();
+        return this.gradingPeriodRepository.findAllOrderByCreatedAt();
     }
 
     public void edit(EditGradingPeriod editGradingPeriod, UUID gradingPeriodId){
@@ -37,7 +37,6 @@ public class GradingPeriodService {
             throw new NotFoundException("Grading period not found for the provided ID.");
         }
         GradingPeriod existingGradingPeriod = optionalGradingPeriod.get();
-
         existingGradingPeriod.setName(editGradingPeriod.name());
         gradingPeriodRepository.save(existingGradingPeriod);
     }

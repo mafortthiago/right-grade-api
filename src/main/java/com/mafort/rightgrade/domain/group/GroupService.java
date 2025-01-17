@@ -1,9 +1,9 @@
 package com.mafort.rightgrade.domain.group;
 
+import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriodResponse;
 import com.mafort.rightgrade.domain.page.CustomPage;
 import com.mafort.rightgrade.domain.teacher.Teacher;
 import com.mafort.rightgrade.domain.teacher.TeacherRepository;
-import com.mafort.rightgrade.infra.exception.InvalidArgumentException;
 import com.mafort.rightgrade.infra.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -11,9 +11,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-
-import java.util.InvalidPropertiesFormatException;
 import java.util.UUID;
 
 @Service
@@ -39,7 +36,7 @@ public class GroupService {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
         Page<Group> pages = groupRepository.findByTeacherId(id, sortedPageable);
         CustomPage<Group> customPages = new CustomPage<>(pages);
-        return customPages.map(p -> new GroupListResponseDTO(p.getId(), p.getName(), p.getMinimumGrade(), p.isGradeFrom0To100()));
+        return customPages.map(p -> new GroupListResponseDTO(p.getId(), p.getName(), p.getMinimumGrade(), p.isGradeFrom0To100(), p.getGradingPeriods().stream().map(GradingPeriodResponse::new).toList()));
     }
 
     public GroupResponseDTO findById(UUID id) {

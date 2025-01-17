@@ -1,12 +1,15 @@
 package com.mafort.rightgrade.domain.group;
 
+import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriod;
 import com.mafort.rightgrade.domain.teacher.Teacher;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -26,6 +29,9 @@ public class Group {
     private boolean isGradeFrom0To100;
     private LocalDateTime createdAt;
     private double minimumGrade;
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("createdAt ASC")
+    private List<GradingPeriod> gradingPeriods;
 
     public Group(CreateGroupDTO createGroupDTO, Teacher teacher){
         this.name = createGroupDTO.name();
