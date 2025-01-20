@@ -29,5 +29,11 @@ public class GradingPeriodController {
         this.gradingPeriodService.edit(editGradingPeriod, gradingPeriodId);
         return ResponseEntity.ok().build();
     }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id){
+        this.gradingPeriodService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+}
 
 }

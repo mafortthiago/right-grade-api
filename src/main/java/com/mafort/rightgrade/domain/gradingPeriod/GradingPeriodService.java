@@ -40,4 +40,12 @@ public class GradingPeriodService {
         existingGradingPeriod.setName(editGradingPeriod.name());
         gradingPeriodRepository.save(existingGradingPeriod);
     }
+
+    public void delete(UUID id){
+        Optional<GradingPeriod> gradingPeriodOptional = this.gradingPeriodRepository.findById(id);
+        if(gradingPeriodOptional.isEmpty()){
+            throw new NotFoundException("There is no Grading Period with the provided ID.");
+        }
+        this.gradingPeriodRepository.deleteById(id);
+    }
 }
