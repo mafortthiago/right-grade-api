@@ -11,7 +11,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
-@RequestMapping("gradingPeriod")
+@RequestMapping("gradingPeriods")
 @RestController
 public class GradingPeriodController {
     @Autowired
@@ -20,11 +20,11 @@ public class GradingPeriodController {
     @PostMapping
     public ResponseEntity<GradingPeriodResponse> create(@Valid @RequestBody  CreateGradingPeriod createGradingPeriod, UriComponentsBuilder uriComponentsBuilder){
         GradingPeriod gradingPeriod = this.gradingPeriodService.create(createGradingPeriod);
-        URI uri = uriComponentsBuilder.path("gradingPeriod/{id}").buildAndExpand(gradingPeriod.getId()).toUri();
+        URI uri = uriComponentsBuilder.path("gradingPeriods/{id}").buildAndExpand(gradingPeriod.getId()).toUri();
         return ResponseEntity.created(uri).body(new GradingPeriodResponse(gradingPeriod));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{gradingPeriodId}")
     public ResponseEntity<Void> edit(@Valid @RequestBody EditGradingPeriod editGradingPeriod, @PathVariable UUID gradingPeriodId){
         this.gradingPeriodService.edit(editGradingPeriod, gradingPeriodId);
         return ResponseEntity.ok().build();
