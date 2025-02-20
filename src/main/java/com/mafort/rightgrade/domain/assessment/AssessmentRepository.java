@@ -9,5 +9,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface AssessmentRepository extends JpaRepository<Assessment, UUID> {
-
+    List<Assessment> findByGradingPeriodId(UUID gradingPeriodId);
 }
