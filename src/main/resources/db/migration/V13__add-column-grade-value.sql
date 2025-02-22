@@ -1,0 +1,1 @@
+ALTER TABLE assessment ADD COLUMN value NUMERIC(4,2);
