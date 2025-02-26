@@ -16,11 +16,23 @@ public class StudentService {
     private GroupRepository groupRepository;
 
     public Student create(CreateStudentDTO studentDTO){
-        Optional<Group> groupOptional = this.groupRepository.findById(studentDTO.groupId());
+        Group group = this.findGroup(studentDTO.groupId());
+        return this.repository.save(new Student(studentDTO, group));
+    }
+
+    public StudentResponse update(CreateStudentDTO studentDTO, UUID id){
+        Group group = this.findGroup(studentDTO.groupId());
+        Student student = new Student(id, studentDTO.name(), group);
+        this.repository.save(student);
+        return new StudentResponse(student);
+    }
+
+    public Group findGroup(UUID id){
+        Optional<Group> groupOptional = this.groupRepository.findById(id);
         if(groupOptional.isEmpty()){
-            throw new NotFoundException("There are no group id");
+            throw new NotFoundException("There are no group with this id");
         }
-        return this.repository.save(new Student(studentDTO, groupOptional.get()));
+        return groupOptional.get();
     }
 
     public List<Student> getAll(){

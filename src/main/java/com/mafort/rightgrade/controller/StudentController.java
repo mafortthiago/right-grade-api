@@ -29,4 +29,10 @@ public class StudentController {
         List<StudentListResponse> studentsTableRow = studentService.getStudentsByGroup(id);
         return ResponseEntity.ok(studentsTableRow);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<StudentResponse> update(@PathVariable UUID id, @RequestBody @Valid CreateStudentDTO studentDTO){
+        StudentResponse studentResponse = this.studentService.update(studentDTO, id);
+        return ResponseEntity.ok(studentResponse);
+    }
 }
