@@ -1,5 +1,6 @@
 package com.mafort.rightgrade.domain.student;
 
+import com.mafort.rightgrade.domain.group.Group;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,8 +18,12 @@ public class Student {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private String name;
+    @ManyToOne
+    @JoinColumn(name="group_id")
+    private Group group;
 
-    public Student(CreateStudentDTO studentDTO){
+    public Student(CreateStudentDTO studentDTO, Group group){
         this.name = studentDTO.name();
+        this.group = group;
     }
 }

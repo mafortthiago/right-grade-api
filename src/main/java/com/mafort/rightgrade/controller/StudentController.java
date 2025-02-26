@@ -1,15 +1,13 @@
 package com.mafort.rightgrade.controller;
 
-import com.mafort.rightgrade.domain.student.CreateStudentDTO;
-import com.mafort.rightgrade.domain.student.Student;
-import com.mafort.rightgrade.domain.student.StudentResponse;
-import com.mafort.rightgrade.domain.student.StudentService;
+import com.mafort.rightgrade.domain.student.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import java.util.List;
+import java.util.UUID;
 
 
 @RequestMapping("students")
@@ -26,9 +24,9 @@ public class StudentController {
         return ResponseEntity.created(uri).body(new StudentResponse(student));
     }
 
-    @GetMapping
-    public ResponseEntity<List<StudentResponse>> getAll(){
-        List<Student> students = this.studentService.getAll();
-        return ResponseEntity.ok(students.stream().map(StudentResponse::new).toList());
+    @GetMapping("byGroup/{id}")
+    public ResponseEntity<List<StudentListResponse>> getAll(@PathVariable UUID id) {
+        List<StudentListResponse> studentsTableRow = studentService.getStudentsByGroup(id);
+        return ResponseEntity.ok(studentsTableRow);
     }
 }
