@@ -1,5 +1,6 @@
 package com.mafort.rightgrade.domain.student;
 
+import com.mafort.rightgrade.domain.grade.GradeResponse;
 import com.mafort.rightgrade.domain.group.Group;
 import com.mafort.rightgrade.domain.group.GroupRepository;
 import com.mafort.rightgrade.infra.exception.NotFoundException;
@@ -61,16 +62,20 @@ public class StudentService {
             UUID id = (UUID) result[0];
             String name = (String) result[1];
             UUID groupIdResult = (UUID) result[2];
-            Double grade = (Double) result[3];
+            Double gradeValue = (Double) result[3];
+            UUID gradeId = (UUID) result[4];
+            UUID assessmentId = (UUID) result[5];
 
             StudentListResponse student = studentMap.get(id);
             if (student == null) {
-                student = new StudentListResponse(id,name, groupIdResult, new ArrayList<>());
+                student = new StudentListResponse(id, name, groupIdResult, new ArrayList<>());
                 studentMap.put(id, student);
             }
-            if (grade != null) {
+            if (gradeValue != null){
+                GradeResponse grade = new GradeResponse(gradeId,assessmentId,id,gradeValue);
                 student.grades().add(grade);
             }
+
         }
         return new ArrayList<>(studentMap.values());
     }
