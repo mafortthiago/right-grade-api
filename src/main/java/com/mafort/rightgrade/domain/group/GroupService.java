@@ -1,7 +1,11 @@
 package com.mafort.rightgrade.domain.group;
 
+import com.mafort.rightgrade.domain.assessment.Assessment;
+import com.mafort.rightgrade.domain.grade.Grade;
+import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriod;
 import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriodResponse;
 import com.mafort.rightgrade.domain.page.CustomPage;
+import com.mafort.rightgrade.domain.student.Student;
 import com.mafort.rightgrade.domain.teacher.Teacher;
 import com.mafort.rightgrade.domain.teacher.TeacherRepository;
 import com.mafort.rightgrade.infra.exception.NotFoundException;
@@ -11,7 +15,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class GroupService {
@@ -36,7 +45,24 @@ public class GroupService {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
         Page<Group> pages = groupRepository.findByTeacherId(id, sortedPageable);
         CustomPage<Group> customPages = new CustomPage<>(pages);
-        return customPages.map(p -> new GroupListResponseDTO(p.getId(), p.getName(), p.getMinimumGrade(), p.isGradeFrom0To100(), p.getGradingPeriods().stream().map(GradingPeriodResponse::new).toList()));
+        return customPages.map(p -> {
+            int quantityStudents = 0;
+            if (p.getGradingPeriods() != null && !p.getGradingPeriods().isEmpty()) {
+                GradingPeriod firstGradingPeriod = p.getGradingPeriods().get(0);
+                if (firstGradingPeriod.getAssessments() != null && !firstGradingPeriod.getAssessments().isEmpty()) {
+                    quantityStudents = getQuantityStudents(firstGradingPeriod.getAssessments().get(0));
+                }
+            }
+            return new GroupListResponseDTO(
+                    p.getId(),
+                    p.getName(),
+                    p.getMinimumGrade(),
+                    p.isGradeFrom0To100(),
+                    p.getGradingPeriods().stream().map(GradingPeriodResponse::new).toList(),
+                    quantityStudents,
+                    getGradeAverage(p.getGradingPeriods())
+            );
+        });
     }
 
     public GroupResponseDTO findById(UUID id) {
@@ -44,5 +70,23 @@ public class GroupService {
             throw new NotFoundException("Group with this ID does not exist");
         }
         return new GroupResponseDTO(this.groupRepository.findById(id).get());
+    }
+
+    private int getQuantityStudents(Assessment assessment){
+        Set<Student> students = new HashSet<Student>();
+        assessment.getGrades().stream().forEach(g -> students.add(g.getStudent()));
+        return students.size();
+    }
+
+    private double getGradeAverage(List<GradingPeriod> gradingPeriods){
+        List<Grade> grades = gradingPeriods.stream()
+                .flatMap(gradingPeriod -> gradingPeriod.getAssessments().stream())
+                .flatMap(assessment -> assessment.getGrades().stream())
+                .collect(Collectors.toList());
+
+        return grades.stream()
+                .mapToDouble(Grade::getValue)
+                .average()
+                .orElse(0.0);
     }
 }

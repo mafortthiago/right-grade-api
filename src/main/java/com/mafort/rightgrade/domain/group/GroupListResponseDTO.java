@@ -10,6 +10,8 @@ public record GroupListResponseDTO(
         String name,
         double minimumGrade,
         boolean isGradeFrom0To100,
-        List<GradingPeriodResponse> gradingPeriods
+        List<GradingPeriodResponse> gradingPeriods,
+        int studentsQuantity,
+        double gradesAverage
 ) {
 }
