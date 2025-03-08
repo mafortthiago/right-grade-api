@@ -1,0 +1,4 @@
+ALTER TABLE class DROP CONSTRAINT fk_group;
+ALTER TABLE class DROP COLUMN group_id;
+ALTER TABLE student ADD COLUMN group_id UUID;
+ALTER TABLE student ADD CONSTRAINT fk_group FOREIGN KEY (group_id) REFERENCES class(id);
