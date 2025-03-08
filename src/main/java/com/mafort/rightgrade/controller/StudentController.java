@@ -35,4 +35,10 @@ public class StudentController {
         StudentResponse studentResponse = this.studentService.update(studentDTO, id);
         return ResponseEntity.ok(studentResponse);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id){
+        this.studentService.delete(id);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -28,6 +28,14 @@ public class StudentService {
         return new StudentResponse(student);
     }
 
+    public void delete(UUID id){
+        Optional<Student> studentOptional = this.repository.findById(id);
+        if(studentOptional.isEmpty()){
+            throw new NotFoundException(("There are no student with this id"));
+        }
+        this.repository.deleteById(id);
+    }
+
     public Group findGroup(UUID id){
         Optional<Group> groupOptional = this.groupRepository.findById(id);
         if(groupOptional.isEmpty()){
@@ -45,11 +53,11 @@ public class StudentService {
      *
      * @param groupId the UUID of the group for which the students should be retrieved.
      * @return a list of {@link StudentListResponse} objects containing the details of the students and their grades.
-     *
+     * <p>
      * This method queries the repository to get the students associated with the specified `groupId`.
      * Each student is represented by a {@link StudentListResponse} object, which includes the student's ID,
      * name, group ID, and a list of grades. If a student has no grades, the grades list will be empty.
-     *
+     * <p>
      * The method uses a map to ensure that each student is added only once to the response list,
      * even if the student has multiple grades. The grades are added to the corresponding student's grades list.
      *
