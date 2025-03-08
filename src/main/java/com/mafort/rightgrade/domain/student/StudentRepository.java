@@ -19,4 +19,12 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     """)
     List<Object[]> findStudentsByGroupId(@Param("groupId") UUID groupId);
 
+    @Query("""
+    SELECT COUNT(s.id)
+    FROM Student s
+    JOIN Group g ON g.id = s.group.id
+    WHERE g.id = :groupId
+    """)
+    int getStudentsByGroupId(@Param("groupId") UUID groupId);
+
 }

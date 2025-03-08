@@ -6,6 +6,7 @@ import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriod;
 import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriodResponse;
 import com.mafort.rightgrade.domain.page.CustomPage;
 import com.mafort.rightgrade.domain.student.Student;
+import com.mafort.rightgrade.domain.student.StudentRepository;
 import com.mafort.rightgrade.domain.teacher.Teacher;
 import com.mafort.rightgrade.domain.teacher.TeacherRepository;
 import com.mafort.rightgrade.infra.exception.NotFoundException;
@@ -16,9 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -26,11 +26,15 @@ import java.util.stream.Collectors;
 public class GroupService {
 
     private final TeacherRepository teacherRepository;
-    @Autowired
-    private GroupRepository groupRepository;
+    private final GroupRepository groupRepository;
+    private final StudentRepository studentRepository;
 
-    public GroupService(TeacherRepository teacherRepository) {
+    public GroupService(TeacherRepository teacherRepository,
+                        GroupRepository groupRepository,
+                        StudentRepository studentRepository) {
         this.teacherRepository = teacherRepository;
+        this.groupRepository = groupRepository;
+        this.studentRepository = studentRepository;
     }
 
     public Group createGroup(CreateGroupDTO createGroupDTO) {
@@ -46,13 +50,7 @@ public class GroupService {
         Page<Group> pages = groupRepository.findByTeacherId(id, sortedPageable);
         CustomPage<Group> customPages = new CustomPage<>(pages);
         return customPages.map(p -> {
-            int quantityStudents = 0;
-            if (p.getGradingPeriods() != null && !p.getGradingPeriods().isEmpty()) {
-                GradingPeriod firstGradingPeriod = p.getGradingPeriods().get(0);
-                if (firstGradingPeriod.getAssessments() != null && !firstGradingPeriod.getAssessments().isEmpty()) {
-                    quantityStudents = getQuantityStudents(firstGradingPeriod.getAssessments().get(0));
-                }
-            }
+            int quantityStudents = this.studentRepository.getStudentsByGroupId(p.getId());
             return new GroupListResponseDTO(
                     p.getId(),
                     p.getName(),
@@ -70,12 +68,6 @@ public class GroupService {
             throw new NotFoundException("Group with this ID does not exist");
         }
         return new GroupResponseDTO(this.groupRepository.findById(id).get());
-    }
-
-    private int getQuantityStudents(Assessment assessment){
-        Set<Student> students = new HashSet<Student>();
-        assessment.getGrades().stream().forEach(g -> students.add(g.getStudent()));
-        return students.size();
     }
 
     private double getGradeAverage(List<GradingPeriod> gradingPeriods){
