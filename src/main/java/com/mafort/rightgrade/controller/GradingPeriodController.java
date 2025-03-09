@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 @RequestMapping("gradingPeriods")
@@ -29,6 +28,7 @@ public class GradingPeriodController {
         this.gradingPeriodService.edit(editGradingPeriod, gradingPeriodId);
         return ResponseEntity.ok().build();
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id){
         this.gradingPeriodService.delete(id);
@@ -36,4 +36,3 @@ public class GradingPeriodController {
     }
 }
 
-}
