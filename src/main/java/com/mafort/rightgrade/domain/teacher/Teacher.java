@@ -23,7 +23,7 @@ public class Teacher implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
+    @Setter
     private String name;
     private String email;
     @Setter
