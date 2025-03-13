@@ -39,6 +39,19 @@ public class ErrorHandler {
         return ResponseEntity.badRequest().body(errors);
     }
 
+    /**
+     * Exception handler for invalid passwords.
+     *
+     * @param ex The InvalidPasswordException thrown
+     * @return ResponseEntity containing the error message and HTTP status code 401 (Unauthorized).
+     */
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidPassword(InvalidPasswordException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<Map<String,String>> handleInvalidArgument(NotFoundException ex){
         Map<String, String> errors = new HashMap<>();
