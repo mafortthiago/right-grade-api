@@ -1,6 +1,7 @@
 package com.mafort.rightgrade.controller;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.mafort.rightgrade.domain.authentication.PasswordValidationRequest;
 import com.mafort.rightgrade.domain.authentication.RefreshToken;
 import com.mafort.rightgrade.domain.authentication.RefreshTokenRepository;
 import com.mafort.rightgrade.domain.authentication.RefreshTokenRequestDTO;
@@ -14,14 +15,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.Console;
 
 @RestController
 public class AuthenticationController {
+    @Autowired TeacherService teacherService;
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
@@ -79,6 +79,12 @@ public class AuthenticationController {
         } catch (JWTVerificationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    @PostMapping("/auth/validate-password")
+    public ResponseEntity<?> validatePassword(@RequestBody PasswordValidationRequest passwordValidationRequest) {
+        this.teacherService.validatePassword(passwordValidationRequest);
+        return ResponseEntity.ok().build();
     }
 }
 
