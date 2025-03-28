@@ -59,4 +59,29 @@ public class ErrorHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errors);
     }
 
+    /**
+     * Exception handler for invalid code.
+     *
+     * @param invalidCodeException The InvalidCodeException thrown
+     * @return ResponseEntity containing the error message and HTTP status code 401 (Unauthorized).
+     */
+    @ExceptionHandler(InvalidCodeException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidCode(InvalidCodeException invalidCodeException){
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", invalidCodeException.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
+    }
+
+
+    /** Exception handler for invalid argument.
+     *
+     * @param invalidArgumentException The InvalidArgumentException thrown
+     * @return ResponseEntity containing the error message and HTTP status code 400.
+     */
+    @ExceptionHandler(InvalidArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidArgument(InvalidArgumentException invalidArgumentException){
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", invalidArgumentException.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
 }
