@@ -15,7 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-public class Assessment {
+public class Assessment implements AssessmentBase{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
