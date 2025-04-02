@@ -10,9 +10,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AssessmentService {
@@ -21,20 +19,39 @@ public class AssessmentService {
     @Autowired
     private AssessmentRepository assessmentRepository;
     @Autowired
+    private RecoveryAssessmentRepository recoveryAssessmentRepository;
+    @Autowired
     private MessageSource messageSource;
 
     public Assessment create(CreateAssessment createAssessment){
         GradingPeriod gradingPeriod = findGradingPeriod(createAssessment.gradingPeriodId());
-        this.validateAssessmentSum(createAssessment.value(), createAssessment.gradingPeriodId());
+        if(!createAssessment.isRecovery()){
+            this.validateAssessmentSum(createAssessment.value(), createAssessment.gradingPeriodId());
+        }
         Assessment assessment = new Assessment(createAssessment, gradingPeriod);
         this.assessmentRepository.save(assessment);
         return assessment;
     }
 
-    public List<AssessmentResponse> getByGradingPeriodId(UUID gradingPeriodId){
+    public List<AssessmentResponse> getByGradingPeriodId(UUID gradingPeriodId) {
         GradingPeriod gradingPeriod = findGradingPeriod(gradingPeriodId);
         List<Assessment> assessments = this.assessmentRepository.findByGradingPeriodId(gradingPeriodId);
-        return this.convertToAssessmentResponse(assessments);
+        var sortedAssessments = this.sortAssessments(assessments);
+        return this.convertToAssessmentResponse(sortedAssessments);
+    }
+
+    private List<AssessmentBase> sortAssessments(List<Assessment> assessments){
+        List<AssessmentBase> assessmentBases= new ArrayList<>();
+        for(Assessment assessment : assessments){
+            assessmentBases.add(assessment);
+            Optional<RecoveryAssessment> recoveryAssessmentOptional = this.findRecoveryAssessment(assessment.getId());
+            recoveryAssessmentOptional.ifPresent(assessmentBases::add);
+        }
+        return assessmentBases;
+    }
+
+    private Optional<RecoveryAssessment> findRecoveryAssessment(UUID originalAssessmentId){
+        return this.recoveryAssessmentRepository.findByOriginalAssessmentId(originalAssessmentId);
     }
 
     private GradingPeriod findGradingPeriod(UUID gradingPeriodId){
@@ -45,25 +62,76 @@ public class AssessmentService {
         return gradingPeriod.get();
     }
 
-    private List<AssessmentResponse> convertToAssessmentResponse(List<Assessment> assessments){
-        return assessments.stream().map(a -> new AssessmentResponse(a)).toList();
+    private List<AssessmentResponse> convertToAssessmentResponse(List<AssessmentBase> assessments) {
+        List<AssessmentResponse> responses = new ArrayList<>();
+        Map<UUID, RecoveryAssessment> recoveryMap = new HashMap<>();
+        List<Assessment> regularAssessments = new ArrayList<>();
+
+        for (AssessmentBase a : assessments) {
+            if (a instanceof RecoveryAssessment recovery) {
+                recoveryMap.put(recovery.getOriginalAssessment().getId(), recovery);
+            } else {
+                regularAssessments.add((Assessment) a);
+            }
+        }
+
+        for (Assessment assessment : regularAssessments) {
+            RecoveryAssessment recovery = recoveryMap.get(assessment.getId());
+            if (recovery != null) {
+                responses.add(new AssessmentResponse(assessment, recovery.getId()));
+            } else {
+                responses.add(new AssessmentResponse(assessment));
+            }
+        }
+
+        for (RecoveryAssessment recovery : recoveryMap.values()) {
+            responses.add(new AssessmentResponse(recovery));
+        }
+
+        return responses;
     }
 
-    private void validateAssessmentSum(double value, UUID gradingPeriodId){
+    private void validateAssessmentSum(double value, UUID gradingPeriodId) {
         List<Assessment> assessments = this.assessmentRepository.findByGradingPeriodId(gradingPeriodId);
 
         double sum = 0;
-        if(!assessments.isEmpty()){
-          sum = assessments.stream().mapToDouble(Assessment::getValue).sum();
+        if (!assessments.isEmpty()) {
+            sum = assessments.stream().mapToDouble(Assessment::getValue).sum();
         }
 
-        boolean isFrom0To100 = assessments.get(0).getGradingPeriod().getGroup().isGradeFrom0To100();
+        boolean isFrom0To100 = true;
+        if (!assessments.isEmpty()) {
+            isFrom0To100 = assessments.get(0).getGradingPeriod().getGroup().isGradeFrom0To100();
+        }
         double maxValue = isFrom0To100 ? 100 : 10;
         double currentValue = value + sum;
-        
-        if(currentValue > maxValue){
+
+        if (currentValue > maxValue) {
             String errorMessage = messageSource.getMessage("error.invalidAssessmentValue", null, LocaleContextHolder.getLocale());
             throw new InvalidArgumentException(errorMessage);
         }
+    }
+
+    public RecoveryAssessmentResponse createRecovery(CreateRecoveryAssessment request){
+        Assessment assessment = this.findAssessment(request.assessmentId());
+        RecoveryAssessment recoveryAssessment = new RecoveryAssessment(assessment);
+        recoveryAssessment.setName(
+                recoveryAssessment.getName() + " " +
+                        this.messageSource.getMessage("recovery",null, LocaleContextHolder.getLocale()));
+        this.recoveryAssessmentRepository.save(recoveryAssessment);
+        return new RecoveryAssessmentResponse(recoveryAssessment);
+    }
+
+    private Assessment findAssessment(UUID assessmentId){
+        Optional<Assessment> optionalAssessment = this.assessmentRepository.findById(assessmentId);
+        if (optionalAssessment.isEmpty()){
+            throw new NotFoundException("There are no assessment with this id.");
+        }
+        return optionalAssessment.get();
+    }
+
+    public void delete(UUID id){
+        this.findAssessment(id);
+        this.assessmentRepository.deleteById(id);
     }
 }
