@@ -11,7 +11,10 @@ public record AssessmentResponse(
         UUID gradingPeriodId,
         LocalDateTime createdAt,
         double value,
-        List<Grade> grades)
+        List<Grade> grades,
+        boolean isRecovery,
+        UUID originalAssessmentId,
+        UUID recoveryAssessmentId)
 {
     public AssessmentResponse(Assessment assessment){
         this(
@@ -20,6 +23,35 @@ public record AssessmentResponse(
                 assessment.getGradingPeriod().getId(),
                 assessment.getCreatedAt(),
                 assessment.getValue(),
-                assessment.getGrades());
+                assessment.getGrades(),
+                false,
+                null,
+                null);
+    }
+
+    public AssessmentResponse(RecoveryAssessment recoveryAssessment){
+        this(
+                recoveryAssessment.getId(),
+                recoveryAssessment.getName(),
+                recoveryAssessment.getGradingPeriod().getId(),
+                recoveryAssessment.getCreatedAt(),
+                recoveryAssessment.getValue(),
+                recoveryAssessment.getGrades(),
+                true,
+                recoveryAssessment.getOriginalAssessment().getId(),
+                null);
+    }
+    public AssessmentResponse(Assessment assessment, UUID recoveryAssessmentId){
+        this(
+                assessment.getId(),
+                assessment.getName(),
+                assessment.getGradingPeriod().getId(),
+                assessment.getCreatedAt(),
+                assessment.getValue(),
+                assessment.getGrades(),
+                false,
+                null,
+                recoveryAssessmentId
+        );
     }
 }

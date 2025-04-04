@@ -13,5 +13,7 @@ public record CreateAssessment(
         @Min(value = 1, message = "{error.minimumAssessmentValue}")
         double value,
         @NotNull(message = "Grading period ID is mandatory")
-        UUID gradingPeriodId) {
+        UUID gradingPeriodId,
+        boolean isRecovery
+) {
 }
