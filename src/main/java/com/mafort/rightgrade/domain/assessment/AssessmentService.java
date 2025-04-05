@@ -64,30 +64,22 @@ public class AssessmentService {
 
     private List<AssessmentResponse> convertToAssessmentResponse(List<AssessmentBase> assessments) {
         List<AssessmentResponse> responses = new ArrayList<>();
-        Map<UUID, RecoveryAssessment> recoveryMap = new HashMap<>();
-        List<Assessment> regularAssessments = new ArrayList<>();
+        Map<UUID, UUID> recoveryIdMap = new HashMap<>();
 
         for (AssessmentBase a : assessments) {
             if (a instanceof RecoveryAssessment recovery) {
-                recoveryMap.put(recovery.getOriginalAssessment().getId(), recovery);
-            } else {
-                regularAssessments.add((Assessment) a);
+                recoveryIdMap.put(recovery.getOriginalAssessment().getId(), recovery.getId());
             }
         }
 
-        for (Assessment assessment : regularAssessments) {
-            RecoveryAssessment recovery = recoveryMap.get(assessment.getId());
-            if (recovery != null) {
-                responses.add(new AssessmentResponse(assessment, recovery.getId()));
-            } else {
-                responses.add(new AssessmentResponse(assessment));
+        for (AssessmentBase assessment : assessments) {
+            if (assessment instanceof Assessment regular) {
+                UUID recoveryId = recoveryIdMap.get(regular.getId());
+                responses.add(new AssessmentResponse(regular, recoveryId));
+            } else if (assessment instanceof RecoveryAssessment recovery) {
+                responses.add(new AssessmentResponse(recovery));
             }
         }
-
-        for (RecoveryAssessment recovery : recoveryMap.values()) {
-            responses.add(new AssessmentResponse(recovery));
-        }
-
         return responses;
     }
 
