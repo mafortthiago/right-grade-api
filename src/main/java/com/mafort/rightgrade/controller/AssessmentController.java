@@ -1,9 +1,6 @@
 package com.mafort.rightgrade.controller;
 
-import com.mafort.rightgrade.domain.assessment.Assessment;
-import com.mafort.rightgrade.domain.assessment.AssessmentService;
-import com.mafort.rightgrade.domain.assessment.CreateAssessment;
-import com.mafort.rightgrade.domain.assessment.AssessmentResponse;
+import com.mafort.rightgrade.domain.assessment.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -32,4 +29,16 @@ public class AssessmentController {
         return ResponseEntity.ok(assessments);
     }
 
+    @PostMapping("/recovery")
+    public ResponseEntity<RecoveryAssessmentResponse> createRecovery(@Valid @RequestBody CreateRecoveryAssessment createRecoveryAssessment, UriComponentsBuilder uriComponentsBuilder){
+        RecoveryAssessmentResponse recoveryAssessmentResponse = this.assessmentService.createRecovery(createRecoveryAssessment);
+        URI uri = uriComponentsBuilder.path("assessment/recovery/{id}").buildAndExpand(recoveryAssessmentResponse.id()).toUri();
+        return ResponseEntity.created(uri).body(recoveryAssessmentResponse);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAssessment(@PathVariable UUID id){
+        this.assessmentService.delete(id);
+        return ResponseEntity.ok().build();
+    }
 }
