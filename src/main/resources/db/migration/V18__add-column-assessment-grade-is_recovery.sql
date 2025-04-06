@@ -1,0 +1,1 @@
+ALTER TABLE assessment ADD is_recovery BOOLEAN;

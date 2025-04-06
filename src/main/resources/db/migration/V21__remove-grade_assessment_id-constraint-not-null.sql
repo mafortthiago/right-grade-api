@@ -1,0 +1,2 @@
+ALTER TABLE grade
+ALTER COLUMN assessment_id DROP NOT NULL;
