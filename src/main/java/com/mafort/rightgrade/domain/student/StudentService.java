@@ -73,6 +73,7 @@ public class StudentService {
             Double gradeValue = (Double) result[3];
             UUID gradeId = (UUID) result[4];
             UUID assessmentId = (UUID) result[5];
+            UUID recoveryAssessmentId = (UUID) result[6];
 
             StudentListResponse student = studentMap.get(id);
             if (student == null) {
@@ -80,7 +81,12 @@ public class StudentService {
                 studentMap.put(id, student);
             }
             if (gradeValue != null){
-                GradeResponse grade = new GradeResponse(gradeId,assessmentId,id,gradeValue);
+                GradeResponse grade = new GradeResponse(
+                    gradeId,
+                    assessmentId != null ? assessmentId : recoveryAssessmentId,
+                    id,
+                    gradeValue
+                );
                 student.grades().add(grade);
             }
 

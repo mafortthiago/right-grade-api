@@ -10,11 +10,12 @@ import java.util.UUID;
 public interface StudentRepository extends JpaRepository<Student, UUID> {
 
     @Query("""
-    SELECT s.id, s.name, g.id, gr.value, gr.id, a.id
+    SELECT s.id, s.name, g.id, gr.value, gr.id, a.id, ra.id
     FROM Student s
     JOIN Group g ON g.id = s.group.id
     LEFT JOIN Grade gr ON gr.student.id = s.id
     LEFT JOIN Assessment a ON a.id = gr.assessment.id
+    LEFT JOIN RecoveryAssessment ra ON ra.id = gr.recoveryAssessment.id 
     WHERE g.id = :groupId
     """)
     List<Object[]> findStudentsByGroupId(@Param("groupId") UUID groupId);
