@@ -41,4 +41,17 @@ public class AssessmentController {
         this.assessmentService.delete(id);
         return ResponseEntity.ok().build();
     }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody @Valid UpdateAssessmentRequest request){
+        if(request.name() != null){
+            this.assessmentService.rename(id, request.name());
+        } else if(request.value() != null){
+            // to do
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
 }

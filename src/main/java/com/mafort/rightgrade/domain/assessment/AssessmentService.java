@@ -126,4 +126,22 @@ public class AssessmentService {
         this.findAssessment(id);
         this.assessmentRepository.deleteById(id);
     }
+
+    public void rename(UUID id, String name){
+        Assessment assessment = this.findAssessment(id);
+        assessment.setName(name);
+        assessment.validate(messageSource);
+
+        if (assessment.getGradingPeriod() != null) {
+            var recoveryAssessmentOptional = this.recoveryAssessmentRepository.findByOriginalAssessmentId(assessment.getId());
+            if (recoveryAssessmentOptional.isPresent()) {
+                RecoveryAssessment recoveryAssessment = recoveryAssessmentOptional.get();
+                recoveryAssessment.setName(assessment.getName() + " " + this.messageSource.getMessage("recovery", null, LocaleContextHolder.getLocale()));
+                this.recoveryAssessmentRepository.save(recoveryAssessment);
+            }
+        }
+
+        this.assessmentRepository.save(assessment);
+
+    }
 }

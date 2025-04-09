@@ -2,11 +2,14 @@ package com.mafort.rightgrade.domain.assessment;
 
 import com.mafort.rightgrade.domain.grade.Grade;
 import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriod;
+import com.mafort.rightgrade.infra.exception.InvalidArgumentException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
+import lombok.Setter;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +22,7 @@ public class Assessment implements AssessmentBase{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+    @Setter
     private String name;
     @ManyToOne
     @JoinColumn(name = "grading_period_id")
@@ -33,5 +37,13 @@ public class Assessment implements AssessmentBase{
         this.value = createAssessment.value();
         this.gradingPeriod = gradingPeriod;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void validate(MessageSource messageSource) {
+        if (this.name == null || this.name.trim().isEmpty()) {
+            throw new InvalidArgumentException(messageSource.getMessage("error.assessment.nameRequired", null, LocaleContextHolder.getLocale()));
+        } else if (this.name.trim().length() < 2 || this.name.trim().length() > 20) {
+            throw new InvalidArgumentException(messageSource.getMessage("error.assessment.nameSize", null, LocaleContextHolder.getLocale()));
+        }
     }
 }
