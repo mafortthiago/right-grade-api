@@ -26,6 +26,7 @@ public class RecoveryAssessment implements AssessmentBase{
     @JoinColumn(name = "grading_period_id")
     private GradingPeriod gradingPeriod;
     private LocalDateTime createdAt;
+    @Setter
     private double value;
     @OneToMany(mappedBy = "recoveryAssessment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Grade> grades;

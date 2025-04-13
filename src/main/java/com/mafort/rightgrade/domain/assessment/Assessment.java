@@ -28,6 +28,7 @@ public class Assessment implements AssessmentBase{
     @JoinColumn(name = "grading_period_id")
     private GradingPeriod gradingPeriod;
     private LocalDateTime createdAt;
+    @Setter
     private double value;
     @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Grade> grades;
@@ -44,6 +45,9 @@ public class Assessment implements AssessmentBase{
             throw new InvalidArgumentException(messageSource.getMessage("error.assessment.nameRequired", null, LocaleContextHolder.getLocale()));
         } else if (this.name.trim().length() < 2 || this.name.trim().length() > 20) {
             throw new InvalidArgumentException(messageSource.getMessage("error.assessment.nameSize", null, LocaleContextHolder.getLocale()));
+        }
+        if (this.value < 1) {
+            throw new InvalidArgumentException(messageSource.getMessage("error.minimumAssessmentValue", null, LocaleContextHolder.getLocale()));
         }
     }
 }

@@ -47,7 +47,7 @@ public class AssessmentController {
         if(request.name() != null){
             this.assessmentService.rename(id, request.name());
         } else if(request.value() != null){
-            // to do
+            this.assessmentService.updateValue(id, request.value());
         } else {
             return ResponseEntity.badRequest().build();
         }

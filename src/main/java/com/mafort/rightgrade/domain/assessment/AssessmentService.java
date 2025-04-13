@@ -131,17 +131,27 @@ public class AssessmentService {
         Assessment assessment = this.findAssessment(id);
         assessment.setName(name);
         assessment.validate(messageSource);
-
-        if (assessment.getGradingPeriod() != null) {
-            var recoveryAssessmentOptional = this.recoveryAssessmentRepository.findByOriginalAssessmentId(assessment.getId());
-            if (recoveryAssessmentOptional.isPresent()) {
-                RecoveryAssessment recoveryAssessment = recoveryAssessmentOptional.get();
-                recoveryAssessment.setName(assessment.getName() + " " + this.messageSource.getMessage("recovery", null, LocaleContextHolder.getLocale()));
-                this.recoveryAssessmentRepository.save(recoveryAssessment);
-            }
+        var recoveryAssessmentOptional = this.recoveryAssessmentRepository.findByOriginalAssessmentId(assessment.getId());
+        if (recoveryAssessmentOptional.isPresent()) {
+            RecoveryAssessment recoveryAssessment = recoveryAssessmentOptional.get();
+            recoveryAssessment.setName(assessment.getName() + " " + this.messageSource.getMessage("recovery", null, LocaleContextHolder.getLocale()));
+            this.recoveryAssessmentRepository.save(recoveryAssessment);
         }
 
         this.assessmentRepository.save(assessment);
 
+    }
+    public void updateValue(UUID id, double value){
+        Assessment assessment = this.findAssessment(id);
+        assessment.setValue(value);
+        assessment.validate(messageSource);
+        this.validateAssessmentSum(assessment.getValue(), assessment.getGradingPeriod().getId());
+
+        var recoveryAssessmentOptional = this.recoveryAssessmentRepository.findByOriginalAssessmentId(assessment.getId());
+        if (recoveryAssessmentOptional.isPresent()) {
+            RecoveryAssessment recoveryAssessment = recoveryAssessmentOptional.get();
+            recoveryAssessment.setValue(value);
+            this.recoveryAssessmentRepository.save(recoveryAssessment);
+        }
     }
 }
