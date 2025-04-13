@@ -1,0 +1,1 @@
+ALTER TABLE recovery_assessment ALTER COLUMN name TYPE VARCHAR(30);
