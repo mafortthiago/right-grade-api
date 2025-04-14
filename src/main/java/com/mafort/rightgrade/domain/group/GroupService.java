@@ -1,16 +1,15 @@
 package com.mafort.rightgrade.domain.group;
 
-import com.mafort.rightgrade.domain.assessment.Assessment;
 import com.mafort.rightgrade.domain.grade.Grade;
 import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriod;
 import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriodResponse;
 import com.mafort.rightgrade.domain.page.CustomPage;
-import com.mafort.rightgrade.domain.student.Student;
 import com.mafort.rightgrade.domain.student.StudentRepository;
 import com.mafort.rightgrade.domain.teacher.Teacher;
 import com.mafort.rightgrade.domain.teacher.TeacherRepository;
 import com.mafort.rightgrade.infra.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -28,6 +28,8 @@ public class GroupService {
     private final TeacherRepository teacherRepository;
     private final GroupRepository groupRepository;
     private final StudentRepository studentRepository;
+    @Autowired
+    private  MessageSource messageSource;
 
     public GroupService(TeacherRepository teacherRepository,
                         GroupRepository groupRepository,
@@ -63,11 +65,16 @@ public class GroupService {
         });
     }
 
-    public GroupResponseDTO findById(UUID id) {
-        if(this.groupRepository.findById(id).isEmpty()){
+    public GroupResponseDTO findGroupResponseById(UUID id) {
+        return new GroupResponseDTO(this.findGroupById(id));
+    }
+
+    private Group findGroupById(UUID id){
+        Optional<Group> groupOptional = this.groupRepository.findById(id);
+        if(groupOptional.isEmpty()){
             throw new NotFoundException("Group with this ID does not exist");
         }
-        return new GroupResponseDTO(this.groupRepository.findById(id).get());
+        return groupOptional.get();
     }
 
     private double getGradeAverage(List<GradingPeriod> gradingPeriods){
@@ -80,5 +87,12 @@ public class GroupService {
                 .mapToDouble(Grade::getValue)
                 .average()
                 .orElse(0.0);
+    }
+
+    public void rename(String name, UUID id){
+        Group group = this.findGroupById(id);
+        group.setName(name);
+        group.validate(messageSource);
+        this.groupRepository.save(group);
     }
 }
