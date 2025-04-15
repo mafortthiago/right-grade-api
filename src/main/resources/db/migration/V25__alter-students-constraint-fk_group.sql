@@ -1,0 +1,8 @@
+ALTER TABLE student
+DROP CONSTRAINT fk_group;
+
+ALTER TABLE student
+ADD CONSTRAINT fk_group
+FOREIGN KEY (group_id)
+REFERENCES class(id)
+ON DELETE CASCADE;

@@ -62,4 +62,10 @@ public class GroupController{
         };
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id){
+        this.service.delete(id);
+        return ResponseEntity.ok().build();
+    }
 }

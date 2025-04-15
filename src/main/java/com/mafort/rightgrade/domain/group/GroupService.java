@@ -95,4 +95,9 @@ public class GroupService {
         group.validate(messageSource);
         this.groupRepository.save(group);
     }
+
+    public void delete(UUID id){
+        Group group = this.findGroupById(id);
+        this.groupRepository.deleteById(id);
+    }
 }
