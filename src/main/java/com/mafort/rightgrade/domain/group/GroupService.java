@@ -100,4 +100,10 @@ public class GroupService {
         Group group = this.findGroupById(id);
         this.groupRepository.deleteById(id);
     }
+
+    public void updateMinimumGrade(UUID id, Double value){
+        Group group = this.findGroupById(id);
+        group.setMinimumGrade(value);
+        this.groupRepository.save(group);
+    }
 }

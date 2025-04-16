@@ -53,7 +53,10 @@ public class GroupController{
     public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody UpdateGroupRequest request){
         if(request.name() != null && (!request.name().isEmpty())){
             this.service.rename(request.name(), id);
-        }else{
+        }else if(request.minimumGrade() != null){
+            this.service.updateMinimumGrade(id, request.minimumGrade());
+        }
+        else{
             throw new InvalidArgumentException(
                     messageSource.getMessage(
                             "error.class.notExistsArgument",

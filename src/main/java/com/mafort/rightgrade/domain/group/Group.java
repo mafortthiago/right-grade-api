@@ -32,6 +32,7 @@ public class Group {
     @Column(name = "gradeType")
     private boolean isGradeFrom0To100;
     private LocalDateTime createdAt;
+    @Setter
     private double minimumGrade;
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("createdAt ASC")
@@ -48,6 +49,10 @@ public class Group {
     public void validate(MessageSource messageSource){
         if(this.name.length() < 2 || this.name.length() > 20){
             throw new InvalidArgumentException(messageSource.getMessage("error.class.nameSize", null, LocaleContextHolder.getLocale()));
+        }
+        if(this.minimumGrade < 1 || this.minimumGrade > 100){
+            throw new InvalidArgumentException(messageSource.getMessage("error.class.minimumGrade", null, LocaleContextHolder.getLocale()));
+
         }
     }
 }
