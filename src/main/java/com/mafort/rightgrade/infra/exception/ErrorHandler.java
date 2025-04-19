@@ -1,28 +1,27 @@
 package com.mafort.rightgrade.infra.exception;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @ControllerAdvice
 public class ErrorHandler {
-    /**
-     * Exception handler that returns an error message and a status code
-     * when the login are incorrect.
-     *
-     * @return ResponseEntity containing the error message and HTTP status code 401 (Unauthorized).
-     */
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<String> handle403error() {
-        String message = "Invalid email or password";
-        return ResponseEntity.status(401).body(message);
-    }
+    @Autowired
+    private MessageSource messageSource;
 
     /**
      * Business rules exception handler, that capture user errors.
@@ -69,6 +68,7 @@ public class ErrorHandler {
     public ResponseEntity<Map<String, String>> handleInvalidCode(InvalidCodeException invalidCodeException){
         Map<String, String> errors = new HashMap<>();
         errors.put("error", invalidCodeException.getMessage());
+        System.out.println("Passou aqui");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
     }
 
@@ -83,5 +83,17 @@ public class ErrorHandler {
         Map<String, String> errors = new HashMap<>();
         errors.put("error", invalidArgumentException.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    /**
+     * Exception handler for bad credentials during authentication.
+     *
+     * @return ResponseEntity containing the localized error message and HTTP status code 401 (Unauthorized).
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, String>> handleBadCredentials() {
+        String message = messageSource.getMessage("error.authentication.badCredentials", null, LocaleContextHolder.getLocale());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", message));
     }
 }
