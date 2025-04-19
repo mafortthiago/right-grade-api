@@ -1,10 +1,7 @@
 package com.mafort.rightgrade.controller;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.mafort.rightgrade.domain.authentication.PasswordValidationRequest;
-import com.mafort.rightgrade.domain.authentication.RefreshToken;
-import com.mafort.rightgrade.domain.authentication.RefreshTokenRepository;
-import com.mafort.rightgrade.domain.authentication.RefreshTokenRequestDTO;
+import com.mafort.rightgrade.domain.authentication.*;
 import com.mafort.rightgrade.domain.teacher.*;
 import com.mafort.rightgrade.infra.security.JWTDTO;
 import com.mafort.rightgrade.infra.security.TokenService;
@@ -23,7 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AuthenticationController {
     @Autowired TeacherService teacherService;
     @Autowired
-    private AuthenticationManager authenticationManager;
+    private AuthenticationService authenticationService;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
@@ -35,17 +32,8 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<JWTDTO> login(@Valid @RequestBody LoginRequestDTO login, HttpServletResponse response) {
-        var authenticationToken = new UsernamePasswordAuthenticationToken(login.email(), login.password());
-        var authentication = authenticationManager.authenticate(authenticationToken);
-        var tokenJWT = tokenService.generateToken((Teacher) authentication.getPrincipal());
-        var teacher = (Teacher) teacherRepository.findByEmail(login.email());
-        var actualToken = refreshTokenRepository.findByTeacherId(teacher.getId());
-        if(actualToken != null){
-            refreshTokenRepository.deleteById(actualToken.getId());
-        }
-        var refreshToken = tokenService.generateRefreshToken((Teacher) authentication.getPrincipal());
-        refreshTokenRepository.save(new RefreshToken(refreshToken, (Teacher) authentication.getPrincipal()));
-        return ResponseEntity.ok(new JWTDTO(tokenJWT, refreshToken, teacher.getId()));
+        JWTDTO jwtDto = authenticationService.authenticate(login.email(), login.password());
+        return ResponseEntity.ok(jwtDto);
     }
 
     @PostMapping("/register")
@@ -82,9 +70,24 @@ public class AuthenticationController {
     }
 
     @PostMapping("/auth/validate-password")
-    public ResponseEntity<?> validatePassword(@RequestBody PasswordValidationRequest passwordValidationRequest) {
+    public ResponseEntity<?> validatePassword(@RequestBody PasswordValidationRequest passwordValidationRequest,
+                                              @RequestHeader(value = "Accept-Language", required = false) String language) {
         this.teacherService.validatePassword(passwordValidationRequest);
+        this.teacherService.sendEmail(passwordValidationRequest.email(), language);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("auth/change-password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request,
+                                            @RequestHeader(value = "Accept-Language", required = false) String language) {
+        teacherService.changePassword(
+                request.email(),
+                request.newPassword(),
+                request.code(),
+                language
+        );
+
+        return ResponseEntity.ok().body("Password updated successfully");
     }
 }
 
