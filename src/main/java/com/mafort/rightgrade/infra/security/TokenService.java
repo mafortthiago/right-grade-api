@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Calendar;
+import java.util.Date;
 
 @Service
 public class TokenService {
@@ -17,11 +19,14 @@ public class TokenService {
 
     public String generateToken(Teacher teacher) {
         try {
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.HOUR, 12);
+            Date expiresAt = calendar.getTime();
             var algorithm = Algorithm.HMAC256(secret);
             return JWT.create()
                     .withIssuer("RightGrade")
                     .withSubject(teacher.getEmail())
-                    .withExpiresAt(dateExpiration(5))  // 5 horas de validade
+                    .withExpiresAt(expiresAt)
                     .sign(algorithm);
         } catch (JWTCreationException jwtCreationException) {
             throw new RuntimeException("Error, unable to generate token");
@@ -34,7 +39,7 @@ public class TokenService {
             return JWT.create()
                     .withIssuer("RightGrade")
                     .withSubject(teacher.getEmail())
-                    .withExpiresAt(dateExpiration(30 * 24))  // 30 dias de validade
+                    .withExpiresAt(dateExpiration(21 * 24))
                     .sign(algorithm);
         } catch (JWTCreationException jwtCreationException) {
             throw new RuntimeException("Error, unable to generate token");

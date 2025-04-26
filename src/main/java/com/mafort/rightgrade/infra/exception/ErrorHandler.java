@@ -6,16 +6,11 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 @ControllerAdvice
@@ -68,7 +63,6 @@ public class ErrorHandler {
     public ResponseEntity<Map<String, String>> handleInvalidCode(InvalidCodeException invalidCodeException){
         Map<String, String> errors = new HashMap<>();
         errors.put("error", invalidCodeException.getMessage());
-        System.out.println("Passou aqui");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
     }
 

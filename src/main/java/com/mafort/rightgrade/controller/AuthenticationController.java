@@ -5,15 +5,20 @@ import com.mafort.rightgrade.domain.authentication.*;
 import com.mafort.rightgrade.domain.teacher.*;
 import com.mafort.rightgrade.infra.security.JWTDTO;
 import com.mafort.rightgrade.infra.security.TokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.Map;
+import java.util.UUID;
 
 
 @RestController
@@ -29,43 +34,38 @@ public class AuthenticationController {
     private TeacherRepository teacherRepository;
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
+    @Autowired MessageSource messageSource;
 
     @PostMapping("/login")
     public ResponseEntity<JWTDTO> login(@Valid @RequestBody LoginRequestDTO login, HttpServletResponse response) {
         JWTDTO jwtDto = authenticationService.authenticate(login.email(), login.password());
-        return ResponseEntity.ok(jwtDto);
+        this.authenticationService.addAuthCookies(response, jwtDto.accessToken(), jwtDto.refreshToken());
+        return ResponseEntity.ok(new JWTDTO(null, null, jwtDto.id()));
     }
 
     @PostMapping("/register")
     public ResponseEntity<JWTDTO> register(@Valid @RequestBody RegisterDTO registerDTO, HttpServletResponse response) {
-        var teacher = new Teacher(registerDTO);
-        teacher.setPassword(passwordEncoder.encode(teacher.getPassword()));
-        teacherRepository.save(teacher);
-        var tokenJWT = tokenService.generateToken(teacher);
-        var refreshToken = tokenService.generateRefreshToken(teacher);
-        refreshTokenRepository.save(new RefreshToken(refreshToken,teacher));
-        return ResponseEntity.status(HttpStatus.CREATED).body(new JWTDTO(tokenJWT, refreshToken, teacher.getId()));
+        JWTDTO jwtDto = authenticationService.register(registerDTO);
+        authenticationService.addAuthCookies(response, jwtDto.accessToken(), jwtDto.refreshToken());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new JWTDTO(null, null, jwtDto.id()));
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<JWTDTO> refreshToken(@RequestBody RefreshTokenRequestDTO refreshToken) {
+    public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         try {
-            String email = tokenService.getSubject(refreshToken.jwt());
-            var teacher = (Teacher)teacherRepository.findByEmail(email);
-            var actualToken = refreshTokenRepository.findByTeacherId(teacher.getId());
-            if (actualToken == null) {
-                throw new JWTVerificationException("Refresh token not found");
+            String refreshTokenValue = authenticationService.extractRefreshTokenFromCookies(request.getCookies());
+
+            if (refreshTokenValue == null) {
+                String errorMessage = messageSource.getMessage("error.refreshToken.notFound", null, LocaleContextHolder.getLocale());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", errorMessage));
             }
-            if (!refreshToken.jwt().equals(actualToken.getToken())) {
-                throw new JWTVerificationException("Invalid jwt");
-            }
-            refreshTokenRepository.deleteById(actualToken.getId());
-            var newToken = tokenService.generateToken(teacher);
-            var newRefreshToken = tokenService.generateRefreshToken( teacher);
-            refreshTokenRepository.save(new RefreshToken(newRefreshToken, teacher));
-            return ResponseEntity.ok(new JWTDTO(newToken, newRefreshToken, teacher.getId()));
+            JWTDTO jwtDto = authenticationService.refreshToken(refreshTokenValue);
+            authenticationService.addAuthCookies(response, jwtDto.accessToken(), jwtDto.refreshToken());
+
+            return ResponseEntity.ok(new JWTDTO(null, null, jwtDto.id()));
         } catch (JWTVerificationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            String errorMessage = messageSource.getMessage("error.refreshToken.invalid", null, LocaleContextHolder.getLocale());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", errorMessage));
         }
     }
 
@@ -87,7 +87,14 @@ public class AuthenticationController {
                 language
         );
 
-        return ResponseEntity.ok().body("Password updated successfully");
+        String successMessage = messageSource.getMessage("success.password.updated", null, LocaleContextHolder.getLocale());
+        return ResponseEntity.ok().body(Map.of("message", successMessage));
+    }
+
+    @GetMapping("me")
+    public ResponseEntity<Map<String,UUID>> checkAuth(@AuthenticationPrincipal Teacher teacher){
+        UUID id = this.authenticationService.checkAuth(teacher);
+        return ResponseEntity.ok(Map.of("id", id));
     }
 }
 

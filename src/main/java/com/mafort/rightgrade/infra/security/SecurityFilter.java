@@ -1,38 +1,80 @@
 package com.mafort.rightgrade.infra.security;
-import com.mafort.rightgrade.domain.teacher.TeacherRepository;
+
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
+    private static final String ACCESS_TOKEN = "accessToken";
+
     @Autowired
     private TokenService tokenService;
+
+    private UserDetailsService userDetailsService;
+
     @Autowired
-    private TeacherRepository teacherRepository;
+    public void setUserDetailsService(@Lazy UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        var jwt = recoverToken(request);
-        if(jwt != null){
-            var subject = tokenService.getSubject(jwt);
-            var teacher = teacherRepository.findByEmail(subject);
-            var authentication = new UsernamePasswordAuthenticationToken(teacher, null, teacher.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        var requestURI = request.getRequestURI();
+        var isAuthRequest = requestURI.contains("/register")
+                || requestURI.contains("/login")
+                || requestURI.contains("/refresh-token");
+        if(!isAuthRequest){
+            try {
+                String accessToken = extractTokenFromCookie(request, ACCESS_TOKEN);
+                String subject = tokenService.getSubject(accessToken);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(subject);
+                var authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
+                        userDetails.getAuthorities());
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (JWTVerificationException e) {
+                SecurityContextHolder.clearContext();
+                invalidateCookie(ACCESS_TOKEN, response);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"Token inválido ou expirado\"}");
+                return;
+            }
         }
+
         filterChain.doFilter(request, response);
     }
-    private String recoverToken(HttpServletRequest request){
-        var authorizationHeader = request.getHeader("Authorization");
-        if(authorizationHeader != null){
-            return authorizationHeader.replace("Bearer ", "");
+
+    private void invalidateCookie(String name, HttpServletResponse response) {
+        Cookie cookie = new Cookie(name, null);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+    }
+
+    private String extractTokenFromCookie(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (name.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
         }
         return null;
-    }
-}
+}}

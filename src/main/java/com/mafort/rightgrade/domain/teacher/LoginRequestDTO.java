@@ -5,11 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record LoginRequestDTO(
-        @NotBlank(message = "Email is mandatory")
-        @Email(message = "Email should be valid")
+        @NotBlank(message = "{error.authentication.email}")
+        @Email(message = "{error.authentication.validEmail}")
         String email,
-        @NotBlank(message = "Password is mandatory")
-        @Size(min = 8, message = "Password must be at least 8 characters long")
+        @NotBlank(message = "{error.authentication.password}")
+        @Size(min = 8, message = "{error.authentication.passwordSize}")
         String password
 ) {
 }
