@@ -1,7 +1,6 @@
 package com.mafort.rightgrade.domain.grade;
 
-import com.mafort.rightgrade.domain.assessment.Assessment;
-import com.mafort.rightgrade.domain.assessment.AssessmentRepository;
+import com.mafort.rightgrade.domain.assessment.*;
 import com.mafort.rightgrade.domain.student.Student;
 import com.mafort.rightgrade.domain.student.StudentRepository;
 import com.mafort.rightgrade.infra.exception.NotFoundException;
@@ -19,13 +18,15 @@ public class GradeService {
     private AssessmentRepository assessmentRepository;
     @Autowired
     private StudentRepository studentRepository;
+    @Autowired
+    RecoveryAssessmentRepository recoveryAssessmentRepository;
 
     public UUID add(CreateGrade createGrade){
         Optional<Assessment> assessmentOptional = this.assessmentRepository.findById(createGrade.assessmentId());
-        if(assessmentOptional.isEmpty()){
+        Optional<RecoveryAssessment> recoveryAssessmentOptional = this.recoveryAssessmentRepository.findById(createGrade.assessmentId());
+        if(assessmentOptional.isEmpty() && recoveryAssessmentOptional.isEmpty()){
             throw new NotFoundException("There isn't any assessment with this id.");
         }
-        Assessment assessment = assessmentOptional.get();
 
         Optional<Student> studentOptional = this.studentRepository.findById(createGrade.studentId());
         if(studentOptional.isEmpty()){
@@ -33,7 +34,13 @@ public class GradeService {
         }
         Student student = studentOptional.get();
 
-        Grade grade = new Grade(createGrade, assessment, student);
+        Grade grade;
+        if(assessmentOptional.isPresent()){
+             grade = new Grade(createGrade, assessmentOptional.get(), student);
+        } else {
+             grade = new Grade(createGrade, recoveryAssessmentOptional.get(), student);
+        }
+
         this.gradeRepository.save(grade);
 
         return grade.getId();
