@@ -77,18 +77,40 @@ public class AuthenticationController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("auth/send-code")
+    public ResponseEntity<Void>sendCode(@RequestBody @Valid SendCodeRequest request,
+                                        @RequestHeader(value = "Accept-Language", required = false) String language){
+        this.teacherService.sendEmail(request.email(), language);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("auth/verify-code")
+    public ResponseEntity<?>sendCode(@RequestBody @Valid VerifyCodeRequest request){
+        String code = this.teacherService.validateCode( request.email(), request.code());
+        return ResponseEntity.ok().body(Map.of("code", code));
+    }
+
     @PostMapping("auth/change-password")
-    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request,
-                                            @RequestHeader(value = "Accept-Language", required = false) String language) {
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         teacherService.changePassword(
                 request.email(),
                 request.newPassword(),
-                request.code(),
-                language
+                request.code()
         );
 
         String successMessage = messageSource.getMessage("success.password.updated", null, LocaleContextHolder.getLocale());
         return ResponseEntity.ok().body(Map.of("message", successMessage));
+    }
+
+    @PostMapping("/auth/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ChangePasswordRequest request) {
+        teacherService.changePassword(
+                request.email(),
+                request.newPassword(),
+                request.code()
+        );
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("me")

@@ -34,9 +34,14 @@ public class SecurityFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         var requestURI = request.getRequestURI();
-        var isAuthRequest = requestURI.contains("/register")
+        var isAuthRequest =
+                requestURI.contains("/register")
                 || requestURI.contains("/login")
-                || requestURI.contains("/refresh-token");
+                || requestURI.contains("/refresh-token")
+                || requestURI.contains("/auth/verify-code")
+                || requestURI.contains("/auth/send-code")
+         || requestURI.contains("/auth/reset-password");
+
         if(!isAuthRequest){
             try {
                 String accessToken = extractTokenFromCookie(request, ACCESS_TOKEN);
