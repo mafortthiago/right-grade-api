@@ -90,4 +90,11 @@ public class ErrorHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error", message));
     }
+
+    @ExceptionHandler(InvalidEmail.class)
+    public ResponseEntity<Map<String, String>> handleInvalidEmail(){
+        String message = messageSource.getMessage("error.invalid.email", null, LocaleContextHolder.getLocale());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", message));
+    }
 }

@@ -33,7 +33,12 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.POST, "/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/refresh-token").permitAll()
-                        .anyRequest().authenticated()  
+                        .requestMatchers(HttpMethod.POST, "/auth/send-code").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/verify-code").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/reset-password").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/confirm-account").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/confirm-account").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .cors( cors -> cors.configurationSource(corsConfigurationSource()))
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
@@ -44,7 +49,7 @@ public class SecurityConfigurations {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        config.setAllowedOriginPatterns(Arrays.asList("*"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 

@@ -1,25 +1,35 @@
 package com.mafort.rightgrade.domain.teacher;
 
+import com.mafort.rightgrade.domain.authentication.AccountConfirmationToken;
+import com.mafort.rightgrade.domain.authentication.AccountConfirmationTokenRepository;
 import com.mafort.rightgrade.domain.authentication.PasswordValidationRequest;
 import com.mafort.rightgrade.domain.verificationCode.VerificationCode;
 import com.mafort.rightgrade.domain.verificationCode.VerificationCodeRepository;
 import com.mafort.rightgrade.domain.email.MailgunEmailService;
 import com.mafort.rightgrade.infra.exception.InvalidCodeException;
+import com.mafort.rightgrade.infra.exception.InvalidEmail;
 import com.mafort.rightgrade.infra.exception.InvalidPasswordException;
 import com.mafort.rightgrade.infra.exception.NotFoundException;
-import com.mafort.rightgrade.infra.security.TokenService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 @Service
 public class TeacherService {
 
+    @Value("${api.url}")
+    private String API_URL;
     @Autowired
     private MessageSource messageSource;
     @Autowired
@@ -27,11 +37,15 @@ public class TeacherService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
-    private MailgunEmailService mailgunEmailService;
-    @Autowired
     VerificationCodeRepository codeRepository;
     @Autowired
-    private TokenService tokenService;
+    AccountConfirmationTokenRepository tokenRepository;
+    private final MailgunEmailService mailgunEmailService;
+
+    @Autowired
+    public TeacherService(@Lazy MailgunEmailService mailgunEmailService) {
+        this.mailgunEmailService = mailgunEmailService;
+    }
 
     public TeacherResponse get(UUID id){
         Teacher teacher = this.findTeacherById(id);
@@ -65,30 +79,35 @@ public class TeacherService {
         }
     }
 
-    public void sendEmail(String email, String language){
+    public void sendEmail(String email, String language, String templateName, Map<String, String> variables) {
         Teacher teacher = (Teacher) this.repository.findByEmail(email);
-        if(teacher == null){
+        if (teacher == null) {
             throw new NotFoundException(messageSource.getMessage("error.invalid.user", null, LocaleContextHolder.getLocale()));
         }
 
-        String code = this.generateRandomCode();
-        Instant expiration = Instant.now().plusSeconds(300);
-        this.codeRepository.save(new VerificationCode(email, code, expiration));
-        Map<String, String> variables = getVariables(language, code);
-        mailgunEmailService.sendEmail(email,variables.get("subject"), "code-confirm", variables);
+        try {
+            mailgunEmailService
+                    .sendEmail(email, variables.get("subject"), templateName, variables)
+                    .join();
+        } catch (CompletionException ex) {
+            if (ex.getCause() instanceof InvalidEmail) {
+                this.repository.deleteTeacherByEmail(email);
+                throw new InvalidEmail("Error with email");
+            }
+            throw ex;
+        }
     }
 
-    Map<String, String> getVariables(String language, String code){
-        Locale locale = language != null && language.equalsIgnoreCase("en")
-                ? Locale.ENGLISH
-                : new Locale("pt");
+
+    public Map<String, String> getPasswordResetVariables(String language, String code) {
+        Locale locale = language != null && language.equalsIgnoreCase("en") ? Locale.ENGLISH : new Locale("pt");
 
         Map<String, String> variables = new HashMap<>();
         variables.put("logo", messageSource.getMessage("logo.url", null, locale));
         variables.put("greeting", messageSource.getMessage("email.greeting", null, locale));
         variables.put("text", messageSource.getMessage("email.text", null, locale));
         variables.put("warning", messageSource.getMessage("email.warning", null, locale));
-        variables.put( "subject",messageSource.getMessage("email.subject",null, locale));
+        variables.put("subject", messageSource.getMessage("email.subject", null, locale));
 
         for (int i = 0; i < code.length(); i++) {
             variables.put("code_" + (i + 1), String.valueOf(code.charAt(i)));
@@ -97,6 +116,20 @@ public class TeacherService {
         return variables;
     }
 
+    public Map<String, String> getAccountConfirmationVariables(String language, String token) {
+        Locale locale = language != null && language.equalsIgnoreCase("en") ? Locale.ENGLISH : new Locale("pt");
+
+        Map<String, String> variables = new HashMap<>();
+        variables.put("logo", messageSource.getMessage("logo.url", null, locale));
+        variables.put("greeting", messageSource.getMessage("email.confirm.greeting", null, locale));
+        variables.put("text1", messageSource.getMessage("email.confirm.text-1", null, locale));
+        variables.put("text2", messageSource.getMessage("email.confirm.text-2", null, locale));
+        variables.put("warning", messageSource.getMessage("email.confirm.warning", null, locale));
+        variables.put("subject", messageSource.getMessage("email.confirm.subject", null, locale));
+        variables.put("confirmationLink", API_URL + "/auth/confirm-account?token=" + token);
+
+        return variables;
+    }
 
     private VerificationCode verifyCode(String email, String code){
         Optional<VerificationCode> verificationCodeOptional = codeRepository.findByEmailAndCode(email, code);
@@ -138,4 +171,45 @@ public class TeacherService {
         return code.toString();
     }
 
+    public void confirmAccount(String token){
+        Optional<AccountConfirmationToken> optional = this.tokenRepository.findByToken(token);
+        if (optional.isEmpty() || optional.get().getExpiration().isBefore(Instant.now())) {
+            throw new NotFoundException("Token expirado.");
+        }
+
+        AccountConfirmationToken confirmation = optional.get();
+        Teacher teacher = (Teacher) this.repository.findByEmail(confirmation.getEmail());
+        if (teacher == null) {
+            throw new NotFoundException("Usuário não encontrado.");
+        }
+
+        teacher.setIsActive(true);
+        this.repository.save(teacher);
+        this.tokenRepository.delete(confirmation);
+    }
+
+    public void sendResetPasswordEmail(String email, String language) {
+        Teacher teacher = (Teacher) this.repository.findByEmail(email);
+        if(teacher == null){
+            throw new NotFoundException(messageSource.getMessage("error.invalid.user", null, LocaleContextHolder.getLocale()));
+        }
+        String code = this.generateRandomCode();
+        Instant expiration = Instant.now().plusSeconds(300);
+        this.codeRepository.save(new VerificationCode(email, code, expiration));
+        this.sendEmail(email,language, "confirm-password", getPasswordResetVariables(language, code));
+    }
+
+    public void sendConfirmAccountEmail(String email, String language) {
+        String code = this.generateRandomCode();
+        Instant expiration = Instant.now().plus(Duration.ofHours(12));
+        tokenRepository.save(new AccountConfirmationToken(code, email, expiration));
+
+        Map<String, String> variables = getAccountConfirmationVariables(language, code);
+        this.sendEmail(email, language, "account-confirmation", variables);
+    }
+
+    @Transactional
+    public void deleteTeacherByEmail(String email){
+        this.repository.deleteTeacherByEmail(email);
+    }
 }

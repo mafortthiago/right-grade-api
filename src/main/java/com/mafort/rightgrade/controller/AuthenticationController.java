@@ -5,9 +5,11 @@ import com.mafort.rightgrade.domain.authentication.*;
 import com.mafort.rightgrade.domain.teacher.*;
 import com.mafort.rightgrade.infra.security.JWTDTO;
 import com.mafort.rightgrade.infra.security.TokenService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -35,19 +38,20 @@ public class AuthenticationController {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
     @Autowired MessageSource messageSource;
+    @Value("${front.url}")
+    private String URL_FRONT;
 
     @PostMapping("/login")
     public ResponseEntity<JWTDTO> login(@Valid @RequestBody LoginRequestDTO login, HttpServletResponse response) {
         JWTDTO jwtDto = authenticationService.authenticate(login.email(), login.password());
-        this.authenticationService.addAuthCookies(response, jwtDto.accessToken(), jwtDto.refreshToken());
+        authenticationService.addAuthCookies(response, jwtDto.accessToken(), jwtDto.refreshToken());
         return ResponseEntity.ok(new JWTDTO(null, null, jwtDto.id()));
     }
 
     @PostMapping("/register")
-    public ResponseEntity<JWTDTO> register(@Valid @RequestBody RegisterDTO registerDTO, HttpServletResponse response) {
-        JWTDTO jwtDto = authenticationService.register(registerDTO);
-        authenticationService.addAuthCookies(response, jwtDto.accessToken(), jwtDto.refreshToken());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new JWTDTO(null, null, jwtDto.id()));
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterDTO registerDTO, HttpServletResponse response) {
+        authenticationService.register(registerDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/refresh-token")
@@ -73,14 +77,14 @@ public class AuthenticationController {
     public ResponseEntity<?> validatePassword(@RequestBody PasswordValidationRequest passwordValidationRequest,
                                               @RequestHeader(value = "Accept-Language", required = false) String language) {
         this.teacherService.validatePassword(passwordValidationRequest);
-        this.teacherService.sendEmail(passwordValidationRequest.email(), language);
+        this.teacherService.sendResetPasswordEmail(passwordValidationRequest.email(), language);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("auth/send-code")
     public ResponseEntity<Void>sendCode(@RequestBody @Valid SendCodeRequest request,
                                         @RequestHeader(value = "Accept-Language", required = false) String language){
-        this.teacherService.sendEmail(request.email(), language);
+        this.teacherService.sendResetPasswordEmail(request.email(), language);
         return ResponseEntity.ok().build();
     }
 
@@ -118,5 +122,40 @@ public class AuthenticationController {
         UUID id = this.authenticationService.checkAuth(teacher);
         return ResponseEntity.ok(Map.of("id", id));
     }
+
+    @GetMapping("/auth/confirm-account")
+    public void confirmAccount(@RequestParam String token, HttpServletResponse response) throws IOException {
+        this.teacherService.confirmAccount(token);
+        response.sendRedirect(URL_FRONT + "confirm-success");
+    }
+
+    @PostMapping("/auth/confirm-account")
+    public ResponseEntity<Void> sendConfirmAccountEmail(
+            @Valid @RequestBody SendCodeRequest request,
+            @RequestHeader(value = "Accept-Language", required = false) String language){
+        this.teacherService.sendConfirmAccountEmail(request.email(), language);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/auth/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        Cookie accessTokenCookie = new Cookie("accessToken", null);
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(0);
+
+        Cookie refreshTokenCookie = new Cookie("refreshToken", null);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(0);;
+
+        response.addCookie(accessTokenCookie);
+        response.addCookie(refreshTokenCookie);
+
+        return ResponseEntity.noContent().build();
+    }
+
 }
 

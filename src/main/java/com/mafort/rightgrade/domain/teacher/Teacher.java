@@ -28,6 +28,8 @@ public class Teacher implements UserDetails {
     private String email;
     @Setter
     private String password;
+    @Setter
+    private Boolean isActive;
 
     public Teacher(RegisterDTO registerDTO) {
         this.email = registerDTO.email();

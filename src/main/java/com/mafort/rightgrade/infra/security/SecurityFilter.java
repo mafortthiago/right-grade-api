@@ -7,7 +7,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,6 +22,7 @@ import java.io.IOException;
 public class SecurityFilter extends OncePerRequestFilter {
     private static final String ACCESS_TOKEN = "accessToken";
 
+    @Autowired private MessageSource messageSource;
     @Autowired
     private TokenService tokenService;
 
@@ -40,7 +43,8 @@ public class SecurityFilter extends OncePerRequestFilter {
                 || requestURI.contains("/refresh-token")
                 || requestURI.contains("/auth/verify-code")
                 || requestURI.contains("/auth/send-code")
-         || requestURI.contains("/auth/reset-password");
+                || requestURI.contains("/auth/reset-password")
+                || requestURI.contains("/auth/confirm-account");
 
         if(!isAuthRequest){
             try {
@@ -55,8 +59,12 @@ public class SecurityFilter extends OncePerRequestFilter {
                 SecurityContextHolder.clearContext();
                 invalidateCookie(ACCESS_TOKEN, response);
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"error\": \"Token inválido ou expirado\"}");
+                response.setContentType("application/json; charset=UTF-8");
+                response.getWriter().write(
+                        "{\"error\": \""+ messageSource.getMessage(
+                                "error.refreshToken.invalid",
+                                null,
+                                LocaleContextHolder.getLocale())+"\"}");
                 return;
             }
         }

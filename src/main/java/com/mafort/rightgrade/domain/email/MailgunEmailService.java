@@ -1,5 +1,6 @@
 package com.mafort.rightgrade.domain.email;
 
+import com.mafort.rightgrade.infra.exception.InvalidEmail;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -13,6 +14,7 @@ import org.thymeleaf.context.Context;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -28,13 +30,14 @@ public class MailgunEmailService {
     private final TemplateEngine templateEngine;
 
 
+
     @Async
-    public void sendEmail(String to, String subject, String templateName, Map<String, String> variables) {
+    public CompletableFuture<Void> sendEmail(String to, String subject, String templateName, Map<String, String> variables) {
         String emailContent = createEmailContent(templateName, variables);
         String authHeader = createAuthHeader(mailgunApiKey);
         String mailgunUrl = createMailgunUrl(mailgunDomain);
 
-        sendEmailRequest(mailgunUrl, authHeader, sender, to, subject, emailContent);
+        return sendEmailRequest(mailgunUrl, authHeader, sender, to, subject, emailContent);
     }
 
     private String createEmailContent(String templateName, Map<String, String> variables) {
@@ -51,8 +54,8 @@ public class MailgunEmailService {
         return "https://api.mailgun.net/v3/" + domain + "/messages";
     }
 
-    private void sendEmailRequest(String url, String authHeader, String from, String to, String subject, String htmlContent) {
-        webClient.post()
+    private CompletableFuture<Void> sendEmailRequest(String url, String authHeader, String from, String to, String subject, String htmlContent) {
+        return webClient.post()
                 .uri(url)
                 .header("Authorization", authHeader)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -62,9 +65,11 @@ public class MailgunEmailService {
                         .with("html", htmlContent))
                 .retrieve()
                 .bodyToMono(String.class)
-                .subscribe(
-                        response -> System.out.println("Email enviado com sucesso: " + response),
-                        error -> System.err.println("Erro ao enviar email: " + error.getMessage())
-                );
+                .doOnError(e -> {
+                    System.out.println(e.getMessage());
+                    throw new InvalidEmail("Falha ao enviar e-mail para " + to);
+                })
+                .then()
+                .toFuture();
     }
 }

@@ -4,6 +4,8 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.mafort.rightgrade.domain.teacher.RegisterDTO;
 import com.mafort.rightgrade.domain.teacher.Teacher;
 import com.mafort.rightgrade.domain.teacher.TeacherRepository;
+import com.mafort.rightgrade.infra.exception.InvalidArgumentException;
+import com.mafort.rightgrade.infra.exception.InvalidPasswordException;
 import com.mafort.rightgrade.infra.security.JWTDTO;
 import com.mafort.rightgrade.infra.security.TokenService;
 import jakarta.servlet.http.Cookie;
@@ -55,6 +57,9 @@ public class AuthenticationService implements UserDetailsService {
 
     public JWTDTO authenticate(String email, String password) {
         Teacher teacher = authenticateTeacher(email, password);
+        if(!teacher.getIsActive()){
+            throw new InvalidPasswordException("A conta ainda não foi validada");
+        }
         return generateTokens(teacher);
     }
 
@@ -97,12 +102,16 @@ public class AuthenticationService implements UserDetailsService {
     }
 
 
-    public JWTDTO register(RegisterDTO registerDTO) {
+    public void register(RegisterDTO registerDTO) {
+        UserDetails userDetails = this.teacherRepository.findByEmail(registerDTO.email());
+        if(userDetails != null){
+            throw new InvalidArgumentException(messageSource.getMessage("error.emailExists",null, LocaleContextHolder.getLocale()));
+        }
         var teacher = new Teacher(registerDTO);
         teacher.setPassword(passwordEncoder.encode(teacher.getPassword()));
+        teacher.setIsActive(Boolean.FALSE);
         teacherRepository.save(teacher);
 
-        return generateTokens(teacher);
     }
 
     public JWTDTO refreshToken(String refreshTokenValue) {
@@ -135,6 +144,10 @@ public class AuthenticationService implements UserDetailsService {
 
     public UUID checkAuth( Teacher teacher ){
         return  teacher.getId();
+    }
+
+    public void logout(){
+
     }
 
 }
