@@ -40,7 +40,7 @@ public class Group {
 
     public Group(CreateGroupDTO createGroupDTO, Teacher teacher){
         this.name = createGroupDTO.name();
-        this.isGradeFrom0To100 = createGroupDTO.gradeType();
+        this.isGradeFrom0To100 = createGroupDTO.isGradeFrom0To100();
         this.createdAt = LocalDateTime.now();
         this.teacher = teacher;
         this.minimumGrade = createGroupDTO.minimumGrade();

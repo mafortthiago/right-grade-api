@@ -9,7 +9,7 @@ public record CreateGroupDTO(
         @Size(min = 2, max = 100, message = "Class name must be between 2 and 100 characters.")
         String name,
         @NotNull(message = "Grade type is mandatory.")
-        Boolean gradeType,
+        Boolean isGradeFrom0To100,
         @NotNull(message = "Teacher id is mandatory.")
         UUID teacherId,
         @NotNull(message = "Minimum grade is mandatory")
