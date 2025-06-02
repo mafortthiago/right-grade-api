@@ -9,4 +9,5 @@ import java.util.UUID;
 @Repository
 public interface VerificationCodeRepository extends JpaRepository<VerificationCode, UUID> {
     Optional<VerificationCode> findByEmailAndCode(String email, String code);
+    void deleteByEmail(String email);
 }

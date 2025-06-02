@@ -3,6 +3,7 @@ package com.mafort.rightgrade.domain.teacher;
 import com.mafort.rightgrade.domain.authentication.AccountConfirmationToken;
 import com.mafort.rightgrade.domain.authentication.AccountConfirmationTokenRepository;
 import com.mafort.rightgrade.domain.authentication.PasswordValidationRequest;
+import com.mafort.rightgrade.domain.authentication.RefreshTokenRepository;
 import com.mafort.rightgrade.domain.verificationCode.VerificationCode;
 import com.mafort.rightgrade.domain.verificationCode.VerificationCodeRepository;
 import com.mafort.rightgrade.domain.email.MailgunEmailService;
@@ -18,11 +19,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 @Service
@@ -36,6 +35,8 @@ public class TeacherService {
     private TeacherRepository repository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
     @Autowired
     VerificationCodeRepository codeRepository;
     @Autowired
@@ -211,5 +212,18 @@ public class TeacherService {
     @Transactional
     public void deleteTeacherByEmail(String email){
         this.repository.deleteTeacherByEmail(email);
+    }
+
+    @Transactional
+    public void deleteTeacherById(UUID id) {
+        Optional<Teacher> teacherOptional = this.repository.findById(id);
+        if (teacherOptional.isEmpty()) {
+            throw new NotFoundException("There is no teacher with this id");
+        }
+        Teacher teacher = teacherOptional.get();
+        this.repository.delete(teacher);
+        this.refreshTokenRepository.deleteByTeacherId(id);
+        this.tokenRepository.deleteByEmail(teacher.getEmail());
+        this.codeRepository.deleteByEmail(teacher.getEmail());
     }
 }

@@ -3,6 +3,7 @@ package com.mafort.rightgrade.controller;
 import com.mafort.rightgrade.domain.teacher.TeacherResponse;
 import com.mafort.rightgrade.domain.teacher.TeacherService;
 import com.mafort.rightgrade.domain.teacher.TeacherUpdateRequest;
+import jakarta.validation.Path;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,5 +28,15 @@ public class TeacherController {
     ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody @Valid TeacherUpdateRequest updateRequest){
         this.service.update(id, updateRequest);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    ResponseEntity<Void> delete(@PathVariable UUID id){
+        this.service.deleteTeacherById(id);
+
+        return ResponseEntity.noContent()
+                .header("Set-Cookie", "token=; HttpOnly; Path=/; Max-Age=0")
+                .header("Set-Cookie", "refreshToken=; HttpOnly; Path=/; Max-Age=0")
+                .build();
     }
 }

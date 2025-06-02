@@ -6,6 +6,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -86,9 +87,9 @@ public class ErrorHandler {
      */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleBadCredentials() {
-        String message = messageSource.getMessage("error.authentication.badCredentials", null, LocaleContextHolder.getLocale());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", message));
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error",  messageSource.getMessage("error.authentication.badCredentials", null, LocaleContextHolder.getLocale()));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errors);
     }
 
     @ExceptionHandler(InvalidEmail.class)
@@ -96,5 +97,12 @@ public class ErrorHandler {
         String message = messageSource.getMessage("error.invalid.email", null, LocaleContextHolder.getLocale());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error", message));
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleUsernameNotFound(UsernameNotFoundException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", this.messageSource.getMessage("error.user.notFound", null, LocaleContextHolder.getLocale()));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errors);
     }
 }

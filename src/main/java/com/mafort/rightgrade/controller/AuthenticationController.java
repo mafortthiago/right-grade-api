@@ -126,7 +126,7 @@ public class AuthenticationController {
     @GetMapping("/auth/confirm-account")
     public void confirmAccount(@RequestParam String token, HttpServletResponse response) throws IOException {
         this.teacherService.confirmAccount(token);
-        response.sendRedirect(URL_FRONT + "confirm-success");
+        response.sendRedirect(URL_FRONT + "/confirm-success");
     }
 
     @PostMapping("/auth/confirm-account")
