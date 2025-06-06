@@ -2,7 +2,6 @@ package com.mafort.rightgrade.domain.assessment;
 
 import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriod;
 import com.mafort.rightgrade.domain.gradingPeriod.GradingPeriodRepository;
-import com.mafort.rightgrade.domain.student.Student;
 import com.mafort.rightgrade.infra.exception.InvalidArgumentException;
 import com.mafort.rightgrade.infra.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,7 @@ public class AssessmentService {
     public Assessment create(CreateAssessment createAssessment){
         GradingPeriod gradingPeriod = findGradingPeriod(createAssessment.gradingPeriodId());
         if(!createAssessment.isRecovery()){
-            this.validateAssessmentSum(createAssessment.value(), createAssessment.gradingPeriodId());
+            this.validateAssessmentSum(createAssessment.value(), gradingPeriod);
         }
         Assessment assessment = new Assessment(createAssessment, gradingPeriod);
         this.assessmentRepository.save(assessment);
@@ -83,15 +82,14 @@ public class AssessmentService {
         return responses;
     }
 
-    private void validateAssessmentSum(double value, UUID gradingPeriodId) {
-        List<Assessment> assessments = this.assessmentRepository.findByGradingPeriodId(gradingPeriodId);
-
+    private void validateAssessmentSum(double value, GradingPeriod gradingPeriod) {
+        List<Assessment> assessments = this.assessmentRepository.findByGradingPeriodId(gradingPeriod.getId());
+        boolean isFrom0To100 = gradingPeriod.getGroup().isGradeFrom0To100();
         double sum = 0;
         if (!assessments.isEmpty()) {
             sum = assessments.stream().mapToDouble(Assessment::getValue).sum();
         }
 
-        boolean isFrom0To100 = true;
         if (!assessments.isEmpty()) {
             isFrom0To100 = assessments.get(0).getGradingPeriod().getGroup().isGradeFrom0To100();
         }
@@ -145,7 +143,7 @@ public class AssessmentService {
         Assessment assessment = this.findAssessment(id);
         assessment.setValue(value);
         assessment.validate(messageSource);
-        this.validateAssessmentSum(assessment.getValue(), assessment.getGradingPeriod().getId());
+        this.validateAssessmentSum(assessment.getValue(), assessment.getGradingPeriod());
 
         var recoveryAssessmentOptional = this.recoveryAssessmentRepository.findByOriginalAssessmentId(assessment.getId());
         if (recoveryAssessmentOptional.isPresent()) {
