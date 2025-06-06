@@ -30,11 +30,13 @@ public class Teacher implements UserDetails {
     private String password;
     @Setter
     private Boolean isActive;
+    private boolean acceptPolicy;
 
     public Teacher(RegisterDTO registerDTO) {
         this.email = registerDTO.email();
         this.name = registerDTO.name();
         this.password = registerDTO.password();
+        this.acceptPolicy = registerDTO.acceptPolicy();
     }
 
     @Override

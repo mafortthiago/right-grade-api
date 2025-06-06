@@ -1,0 +1,2 @@
+ALTER TABLE teachers
+ADD COLUMN acceptPolicy BOOLEAN NOT NULL;
