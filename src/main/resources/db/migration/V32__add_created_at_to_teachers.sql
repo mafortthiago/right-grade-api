@@ -1,0 +1,1 @@
+ALTER TABLE teachers ADD COLUMN created_at TIMESTAMP;

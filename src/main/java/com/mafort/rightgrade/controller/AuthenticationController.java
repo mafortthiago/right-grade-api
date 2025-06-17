@@ -125,7 +125,13 @@ public class AuthenticationController {
 
     @GetMapping("/auth/confirm-account")
     public void confirmAccount(@RequestParam String token, HttpServletResponse response) throws IOException {
-        this.teacherService.confirmAccount(token);
+        boolean isConfirmed = teacherService.confirmAccount(token);
+
+        if (!isConfirmed) {
+            response.sendRedirect(URL_FRONT + "/expired-token");
+            return;
+        }
+
         response.sendRedirect(URL_FRONT + "/confirm-success");
     }
 

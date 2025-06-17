@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -31,12 +32,15 @@ public class Teacher implements UserDetails {
     @Setter
     private Boolean isActive;
     private boolean acceptPolicy;
+    @Setter
+    private LocalDateTime createdAt;
 
     public Teacher(RegisterDTO registerDTO) {
         this.email = registerDTO.email();
         this.name = registerDTO.name();
         this.password = registerDTO.password();
         this.acceptPolicy = registerDTO.acceptPolicy();
+        this.createdAt = LocalDateTime.now();
     }
 
     @Override

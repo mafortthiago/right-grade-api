@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletionException;
 
@@ -172,23 +173,26 @@ public class TeacherService {
         return code.toString();
     }
 
-    public void confirmAccount(String token){
+    public boolean confirmAccount(String token) {
         Optional<AccountConfirmationToken> optional = this.tokenRepository.findByToken(token);
-        if (optional.isEmpty() || optional.get().getExpiration().isBefore(Instant.now())) {
-            throw new NotFoundException("Token expirado.");
-        }
-
         AccountConfirmationToken confirmation = optional.get();
         Teacher teacher = (Teacher) this.repository.findByEmail(confirmation.getEmail());
+
+        if (optional.get().getExpiration().isBefore(Instant.now())) {
+            this.repository.delete(teacher);
+            return false;
+        }
+
         if (teacher == null) {
-            throw new NotFoundException("Usuário não encontrado.");
+            return false;
         }
 
         teacher.setIsActive(true);
+        teacher.setCreatedAt(LocalDateTime.now());
         this.repository.save(teacher);
         this.tokenRepository.delete(confirmation);
+        return true;
     }
-
     public void sendResetPasswordEmail(String email, String language) {
         Teacher teacher = (Teacher) this.repository.findByEmail(email);
         if(teacher == null){
@@ -202,7 +206,7 @@ public class TeacherService {
 
     public void sendConfirmAccountEmail(String email, String language) {
         String code = this.generateRandomCode();
-        Instant expiration = Instant.now().plus(Duration.ofHours(12));
+        Instant expiration = Instant.now().plus(Duration.ofMinutes(15));
         tokenRepository.save(new AccountConfirmationToken(code, email, expiration));
 
         Map<String, String> variables = getAccountConfirmationVariables(language, code);
